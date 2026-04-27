@@ -18,9 +18,9 @@ No data is sent to any server. No account needed. Nothing is stored.
 
 ---
 
-## 🚀 Try It Now (Live Demo)
+🚀 Try It Now (Live Demo)
 
-**👉 [Open the Live Tool](https://YOUR-USERNAME.github.io/YOUR-REPO-NAME)**
+👉 [Open the Live Tool](https://dagrang-repository.github.io/free-ai-medical-tool/)
 
 *(Replace the link above with your actual GitHub Pages URL after you enable it)*
 
