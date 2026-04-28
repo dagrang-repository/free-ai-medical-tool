@@ -432,9 +432,25 @@
             document.head.appendChild(style);
         }
 
+        function speakReport() {
+            const text = document.getElementById('live-report-preview').innerText;
+            if ('speechSynthesis' in window && text) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = navigator.language || 'en-US';
+                utterance.rate = 0.95;
+                window.speechSynthesis.speak(utterance);
+            } else {
+                showToast("Text-to-speech not supported in this browser");
+            }
+        }
+
         function initVoice() {
             const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognitionAPI) { const t = document.getElementById('voice-toggle'); if (t) { t.disabled = true; } return; }
+            if (!SpeechRecognitionAPI) {
+                // Don't disable toggle — just show toast if they try
+                return;
+            }
             recognition = new SpeechRecognitionAPI();
             recognition.continuous = true;
             recognition.interimResults = false;
@@ -452,22 +468,19 @@
                 if (event.error === 'no-speech') showToast("No speech detected.");
                 else if (event.error === 'audio-capture') showToast("Microphone not available.");
             };
-            window.speakReport = function() {
-                const text = document.getElementById('live-report-preview').innerText;
-                if ('speechSynthesis' in window && text) {
-                    const utterance = new SpeechSynthesisUtterance(text);
-                    utterance.lang = navigator.language || 'en-US';
-                    utterance.rate = 0.95;
-                    window.speechSynthesis.speak(utterance);
-                }
-            };
+
         }
 
         function toggleVoiceListening() {
             const toggle = document.getElementById('voice-toggle');
+            if (!recognition) {
+                toggle.checked = false;
+                showToast("Voice input not supported in this browser");
+                return;
+            }
             voiceListening = toggle.checked;
-            if (voiceListening && recognition) { try { recognition.start(); showToast("Voice listening active"); } catch(e) {} }
-            else if (recognition) recognition.stop();
+            if (voiceListening) { try { recognition.start(); showToast("Voice listening active"); } catch(e) {} }
+            else recognition.stop();
         }
 
         function registerPWA() {
@@ -897,7 +910,7 @@ Conversation: ${history.map(h => `Patient: ${h.user}`).join(' | ')}`;
             doc.setTextColor(0, 0, 0); y = 22;
 
             doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.setTextColor(100, 116, 139);
-            const patientLine = `${currentFullName ? currentFullName + ' · ' : ''}${currentEmail} · ${new Date().toLocaleDateString()}`;
+            const patientLine = `${currentFullName ? currentFullName + ' · ' : ''}${new Date().toLocaleDateString()}`;
             doc.text(patientLine, margin, y); y += 10;
 
             const sections = reportText.split(/\n---\n/);
