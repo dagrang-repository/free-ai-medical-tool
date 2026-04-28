@@ -118,6 +118,88 @@
             border: none;
             display: flex;
             align-items: center;
+
+        /* ── Floating Share Button ── */
+        .floating-share {
+            position: fixed;
+            bottom: max(6px, env(safe-area-inset-bottom, 6px));
+            left: max(6px, env(safe-area-inset-left, 6px));
+            width: 32px;
+            height: 32px;
+            background: transparent;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 50;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            padding: 0;
+            overflow: visible;
+            animation: shareBreathe 4s ease-in-out infinite;
+        }
+
+        .floating-share i {
+            position: relative;
+            z-index: 3;
+            color: #14b8a6;
+            font-size: 26px;
+            text-shadow:
+                0 1px 0 #0f766e,
+                0 2px 0 #0d6b63,
+                0 -1px 1px rgba(180, 255, 245, 0.85),
+                0 0 10px rgba(20, 184, 166, 0.85),
+                0 0 22px rgba(20, 184, 166, 0.5);
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
+            animation: shareIconPulse 4s ease-in-out infinite;
+            transform-origin: center;
+        }
+
+        .floating-share::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 4px;
+            width: 4px;
+            height: 4px;
+            background: white;
+            border-radius: 50%;
+            box-shadow:
+                0 0 5px 2px rgba(255, 255, 255, 0.9),
+                0 0 12px 3px rgba(180, 255, 245, 0.7);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 4;
+            animation: sparkle 4s ease-in-out infinite;
+        }
+
+        @keyframes shareBreathe {
+            0%, 100% { transform: scale(1); }
+            50%       { transform: scale(1.05); }
+        }
+
+        @keyframes shareIconPulse {
+            0%, 100% {
+                transform: scale(1);
+                filter: drop-shadow(0 2px 4px rgba(0,0,0,0.35)) drop-shadow(0 0 6px rgba(20,184,166,0.5));
+            }
+            50% {
+                transform: scale(1.07);
+                filter: drop-shadow(0 2px 4px rgba(0,0,0,0.35)) drop-shadow(0 0 14px rgba(20,184,166,0.9));
+            }
+        }
+
+        .floating-share:hover,
+        .floating-share:focus-visible {
+            animation-play-state: paused;
+            transform: scale(1.2);
+            outline: 3px solid #f43f5e;
+            outline-offset: 4px;
+            border-radius: 9999px;
+        }
+
+        .floating-share:active { transform: scale(0.92); }
             justify-content: center;
             cursor: pointer;
             z-index: 50;
@@ -204,6 +286,7 @@
 
         @media (prefers-reduced-motion: reduce) {
             .floating-heart,
+            .floating-share,
             .urgency-banner,
             .report-section,
             .medical-card,
@@ -543,6 +626,11 @@
         </button>
     </section>
     </main>
+
+    <!-- FLOATING SHARE -->
+    <button id="share-btn" type="button" aria-label="Share this tool" class="floating-share" onclick="showShareModal()">
+        <i class="fa-solid fa-share-nodes" aria-hidden="true"></i>
+    </button>
 
     <!-- FLOATING HEART -->
     <button id="donation-heart-btn" type="button" aria-label="Support this tool — donate" class="floating-heart shadow-xl">
@@ -1737,15 +1825,82 @@ Conversation: ${history.map(h => `User: ${h.user}`).join(' | ')}`;
 
             // Footer on each page
             const totalPages = doc.internal.getNumberOfPages();
+            const toolUrl = window.location.hostname !== 'localhost' ? window.location.href : 'myaihealth.app';
             for (let i = 1; i <= totalPages; i++) {
                 doc.setPage(i);
                 doc.setFont("helvetica", "normal");
                 doc.setFontSize(8);
                 doc.setTextColor(148, 163, 184);
-                doc.text(`Page ${i} of ${totalPages} · AI-generated report · Not medical advice`, margin, pageH - 8);
+                doc.text(`Page ${i} of ${totalPages} · AI-generated report · Not medical advice`, margin, pageH - 12);
+                doc.setTextColor(20, 184, 166);
+                doc.text(`Free tool: ${toolUrl}`, margin, pageH - 6);
             }
 
             doc.save(`AI_Medical_Report_${currentFullName ? currentFullName.replace(/\s+/g,'_') + '_' : ''}${new Date().toISOString().split('T')[0]}.pdf`);
+        }
+
+        // ============================================
+        // SHARE MODAL
+        // ============================================
+        function showShareModal() {
+            const url = encodeURIComponent(window.location.href);
+            const shortMsg = encodeURIComponent("I found a free AI tool that helps you describe your symptoms and get a proper PDF report to take to your doctor or pharmacist. Private, browser-only, no data stored.");
+            const longMsg = encodeURIComponent("I made a free tool that helps people explain their health problems clearly — and get a proper written report to take to a doctor or pharmacist.\n\nIt works in your browser (nothing is stored). You just type or speak normally, and it creates a PDF with:\n• What you told it\n• Clear next steps\n• Pharmacy suggestions\n\nCompletely free, private, and made to help normal people.\n\n");
+
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black/70 z-[250] flex items-end sm:items-center justify-center';
+            modal.id = 'share-modal';
+            modal.innerHTML = `
+                <div onclick="event.stopPropagation()" class="bg-white w-full sm:max-w-md sm:mx-4 rounded-t-3xl sm:rounded-3xl p-6 sm:p-8 shadow-2xl">
+                    <div class="flex items-center justify-between mb-5">
+                        <div>
+                            <div class="font-semibold text-xl text-slate-900">Share this tool</div>
+                            <div class="text-sm text-slate-500 mt-0.5">Help someone who needs it</div>
+                        </div>
+                        <button onclick="document.getElementById('share-modal').remove()" class="w-9 h-9 flex items-center justify-center text-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full">×</button>
+                    </div>
+
+                    <!-- Platform buttons -->
+                    <div class="grid grid-cols-2 gap-3 mb-5">
+                        <a href="https://wa.me/?text=${longMsg}${url}" target="_blank" rel="noopener"
+                           class="flex items-center gap-2.5 px-4 py-3 bg-green-50 hover:bg-green-100 border border-green-200 rounded-2xl text-green-800 font-medium text-sm transition-all">
+                            <i class="fa-brands fa-whatsapp text-xl text-green-600"></i> WhatsApp
+                        </a>
+                        <a href="https://www.facebook.com/sharer/sharer.php?u=${url}" target="_blank" rel="noopener"
+                           class="flex items-center gap-2.5 px-4 py-3 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-2xl text-blue-800 font-medium text-sm transition-all">
+                            <i class="fa-brands fa-facebook text-xl text-blue-600"></i> Facebook
+                        </a>
+                        <a href="https://www.linkedin.com/sharing/share-offsite/?url=${url}" target="_blank" rel="noopener"
+                           class="flex items-center gap-2.5 px-4 py-3 bg-sky-50 hover:bg-sky-100 border border-sky-200 rounded-2xl text-sky-800 font-medium text-sm transition-all">
+                            <i class="fa-brands fa-linkedin text-xl text-sky-700"></i> LinkedIn
+                        </a>
+                        <a href="https://twitter.com/intent/tweet?text=${shortMsg}&url=${url}" target="_blank" rel="noopener"
+                           class="flex items-center gap-2.5 px-4 py-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl text-slate-800 font-medium text-sm transition-all">
+                            <i class="fa-brands fa-x-twitter text-xl"></i> X / Twitter
+                        </a>
+                        <a href="mailto:?subject=Free AI Health Tool&body=${longMsg}${url}" 
+                           class="flex items-center gap-2.5 px-4 py-3 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-2xl text-rose-800 font-medium text-sm transition-all">
+                            <i class="fa-solid fa-envelope text-xl text-rose-500"></i> Email
+                        </a>
+                        <button onclick="navigator.clipboard.writeText(window.location.href).then(()=>showToast('Link copied!'))"
+                                class="flex items-center gap-2.5 px-4 py-3 bg-teal-50 hover:bg-teal-100 border border-teal-200 rounded-2xl text-teal-800 font-medium text-sm transition-all">
+                            <i class="fa-solid fa-link text-xl text-teal-600"></i> Copy link
+                        </button>
+                    </div>
+
+                    <!-- Grandpa-friendly message -->
+                    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                        <div class="text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wide">Ready-to-send message</div>
+                        <p class="text-sm text-slate-700 leading-relaxed" id="share-text-preview">I found a free AI tool that helps you describe your symptoms and get a proper PDF report to take to your doctor or pharmacist. Private, browser-only, no data stored. Try it: ${window.location.href}</p>
+                        <button onclick="navigator.clipboard.writeText(document.getElementById('share-text-preview').innerText).then(()=>showToast('Message copied!'))"
+                                class="mt-3 text-xs text-teal-700 font-semibold hover:underline flex items-center gap-1">
+                            <i class="fa-solid fa-copy"></i> Copy full message
+                        </button>
+                    </div>
+                </div>
+            `;
+            modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+            document.body.appendChild(modal);
         }
 
         // ============================================
