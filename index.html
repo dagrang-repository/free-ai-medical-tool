@@ -115,14 +115,14 @@
                 <div class="max-w-md mx-auto">
                     <form id="start-form" autocomplete="on" onsubmit="startAnalysis(); return false;">
                         <div class="mb-4 text-left">
-                            <label for="email-input" class="block text-sm font-medium text-slate-800 mb-2">Your email <span class="text-slate-500 font-normal">(for report delivery)</span></label>
-                            <input id="email-input" type="email" name="email" placeholder="you@example.com" autocomplete="email" inputmode="email"
+                            <label for="fullname-input" class="block text-sm font-medium text-slate-800 mb-2">Your name <span class="text-slate-500 font-normal">(optional — appears on your report)</span></label>
+                            <input id="fullname-input" type="text" name="fullname" placeholder="e.g. Jean Dupont" autocomplete="name"
                                    class="w-full px-5 py-3.5 border-2 border-slate-200 focus:border-teal-600 rounded-3xl text-base bg-white outline-none transition-all placeholder:text-slate-400 text-slate-900">
                         </div>
                         <div class="mb-4 text-left">
-                            <label for="fullname-input" class="block text-sm font-medium text-slate-800 mb-2">Full name <span class="text-slate-500 font-normal">(optional — appears on your report)</span></label>
-                            <input id="fullname-input" type="text" name="fullname" placeholder="e.g. Jean Dupont" autocomplete="name"
-                                   class="w-full px-5 py-3.5 border-2 border-slate-200 focus:border-teal-600 rounded-3xl text-base bg-white outline-none transition-all placeholder:text-slate-400 text-slate-900">
+                            <label for="concern-input" class="block text-sm font-medium text-slate-800 mb-2">What brings you here today? <span class="text-slate-500 font-normal">(describe your main concern)</span></label>
+                            <textarea id="concern-input" name="concern" rows="3" placeholder="e.g. I've had a headache and fever for 2 days..."
+                                   class="w-full px-5 py-3.5 border-2 border-slate-200 focus:border-teal-600 rounded-3xl text-base bg-white outline-none transition-all placeholder:text-slate-400 text-slate-900 resize-none"></textarea>
                         </div>
                         <div class="mb-5 flex items-start gap-3 text-left bg-slate-50 border border-slate-200 rounded-2xl p-4">
                             <input type="checkbox" id="consent-checkbox" class="mt-0.5 w-5 h-5 accent-teal-600 shrink-0 cursor-pointer">
@@ -275,33 +275,15 @@
         const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/fZu00jdsW2O46jm6955ZC07";
 
         // ============================================
-        // 10-LAYER GEMINI PROTECTION
+        // WORKER ENDPOINT — all keys/models handled server-side
         // ============================================
-        const GEMINI_KEYS = [
-            "AIzaSyBY1WmKIBKeXDQmu1LeQlP3zhuYu2w1Pw0",
-            "AIzaSyDF_dcQDu8cdvf_18glY1MSLrSaTu6zp7Q",
-            "AIzaSyDPIm1dI_C7yGbd5lWLucbDD0vTHTSy4_M"
-        ];
-        const GEMINI_MODELS = [
-            "gemini-2.0-flash",
-            "gemini-2.0-flash-lite",
-            "gemini-2.5-flash"
-        ];
-        const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
-        let _geminiKeyIndex = 0;
-        let _geminiModelIndex = 0;
-        let _lastSuccessfulResponse = null; // Layer 10: cache
-        let _offlineQueue = []; // Layer 9: queue
-        let _isOnline = navigator.onLine;
-        window.addEventListener('online', () => {
-            _isOnline = true;
-            _drainOfflineQueue();
-        });
-        window.addEventListener('offline', () => { _isOnline = false; });
+        const WORKER_URL = "https://mute-wildflower-a16egemini-proxy.dagrang.workers.dev/";
 
-        function _geminiEndpoint(keyIdx, modelIdx) {
-            return `${GEMINI_BASE}${GEMINI_MODELS[modelIdx]}:generateContent?key=${GEMINI_KEYS[keyIdx]}`;
-        }
+        let _lastSuccessfulResponse = null;
+        let _offlineQueue = [];
+        let _isOnline = navigator.onLine;
+        window.addEventListener('online', () => { _isOnline = true; _drainOfflineQueue(); });
+        window.addEventListener('offline', () => { _isOnline = false; });
 
         async function _drainOfflineQueue() {
             while (_offlineQueue.length > 0) {
@@ -310,85 +292,49 @@
             }
         }
 
-        async function _attemptGeminiCall(prompt, keyIdx, modelIdx) {
-            const endpoint = _geminiEndpoint(keyIdx, modelIdx);
-            const response = await fetch(endpoint, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                referrerPolicy: "no-referrer", // Layer 5
-                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-            });
-            // Layer 7: detect 403 vs network error
-            if (response.status === 403) throw new Error("KEY_BLOCKED");
-            if (response.status === 429) throw new Error("RATE_LIMITED");
-            if (!response.ok) throw new Error(`HTTP_${response.status}`);
-            const data = await response.json();
-            if (data.error) throw new Error(data.error.message || "API_ERROR");
-            if (!data.candidates?.[0]?.content?.parts?.[0]) throw new Error("INVALID_RESPONSE");
-            return data.candidates[0].content.parts[0].text.trim();
-        }
-
-        // Layer 6: static fallback questions
         const _fallbackQuestions = [
-            "How long have you been experiencing these symptoms?",
-            "On a scale of 1-10, how severe are your symptoms?",
-            "Have you taken any medications for this?",
-            "Do you have any known allergies?",
-            "Have you seen a doctor about this before?"
+            "How long have you been experiencing this?",
+            "On a scale of 1–10, how severe is it?",
+            "Have you taken anything for it so far?",
+            "Do you have any known allergies or conditions?",
+            "Has this happened before?"
         ];
         let _fallbackQIdx = 0;
 
         async function safeGeminiCall(prompt) {
-            // Layer 9: queue if offline
             if (!_isOnline) {
                 return new Promise((resolve, reject) => {
                     _offlineQueue.push({ prompt, resolve, reject });
                     showToast("You're offline — request queued");
                 });
             }
-
-            const MAX_RETRIES = 3; // Layer 3
-            let lastError = null;
-
+            const MAX_RETRIES = 3;
             for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-                // Layer 8: toast on retry
                 if (attempt > 0) {
-                    showToast(`Retrying... (attempt ${attempt + 1})`);
+                    showToast(`Retrying... (${attempt + 1}/3)`);
                     await new Promise(r => setTimeout(r, 1000 * attempt));
                 }
-
-                // Layer 2: rotate through all key+model combos
-                for (let ki = 0; ki < GEMINI_KEYS.length; ki++) {
-                    for (let mi = 0; mi < GEMINI_MODELS.length; mi++) {
-                        const keyIdx = (_geminiKeyIndex + ki) % GEMINI_KEYS.length;
-                        const modelIdx = (_geminiModelIndex + mi) % GEMINI_MODELS.length;
-                        try {
-                            const result = await _attemptGeminiCall(prompt, keyIdx, modelIdx);
-                            _geminiKeyIndex = keyIdx; // stick with working key
-                            _geminiModelIndex = modelIdx;
-                            _lastSuccessfulResponse = result; // Layer 10: cache success
-                            return result;
-                        } catch(e) {
-                            lastError = e;
-                            console.warn(`Gemini attempt failed [key:${keyIdx} model:${modelIdx}]:`, e.message);
-                            // Layer 4: if key blocked, try next key immediately
-                            if (e.message === "KEY_BLOCKED") continue;
-                        }
+                try {
+                    const res = await fetch(WORKER_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                    });
+                    if (!res.ok) {
+                        const errData = await res.json().catch(() => ({}));
+                        throw new Error(errData.error || `HTTP ${res.status}`);
                     }
+                    const data = await res.json();
+                    if (!data.candidates?.[0]?.content?.parts?.[0]) throw new Error("Invalid response");
+                    const result = data.candidates[0].content.parts[0].text.trim();
+                    _lastSuccessfulResponse = result;
+                    return result;
+                } catch(e) {
+                    console.warn(`Gemini attempt ${attempt + 1} failed:`, e.message);
                 }
             }
-
-            // Layer 10: return cached response if available
-            if (_lastSuccessfulResponse) {
-                console.warn("All Gemini calls failed — using cached response");
-                return _lastSuccessfulResponse;
-            }
-
-            // Layer 6: static fallback question
-            const fallback = _fallbackQuestions[_fallbackQIdx % _fallbackQuestions.length];
-            _fallbackQIdx++;
-            console.warn("Using static fallback question");
-            return fallback;
+            if (_lastSuccessfulResponse) return _lastSuccessfulResponse;
+            return _fallbackQuestions[(_fallbackQIdx++) % _fallbackQuestions.length];
         }
 
         // ============================================
@@ -541,34 +487,45 @@
         }
 
         // ============================================
-        // AI: QUESTIONING
+        // AI: QUESTIONING — strict context-aware, no repeats
         // ============================================
         async function getNextQuestionFromAI(userInput) {
-            const history = userData.conversationHistory.slice(0, -1).filter(h => h.ai);
-            const previousQuestions = history.map(h => h.ai).filter(Boolean);
+            const history = userData.conversationHistory.filter(h => h.ai && h.user);
+            const askedQuestions = history.map(h => h.ai).filter(Boolean);
+            const allUserInputs = history.map(h => h.user).filter(Boolean);
             const turnCount = history.length;
-            const recentHistory = history.slice(-12);
 
-            const prompt = `You are a goal-driven medical intake AI. Your ONLY purpose is to gather enough information to produce TWO specific outputs for this patient:
-1. A concrete, actionable final solution to their problem
-2. A pharmacy-ready medication recommendation (specific drug category, form, dosage guidance, OTC or prescription)
+            // Build a tight context summary of what we already know
+            const knownFacts = allUserInputs.join(' | ');
 
-Patient's latest answer: "${userInput}"
+            const prompt = `You are a medical intake AI. Your goal: ask ONE question to gather missing info needed for a concrete diagnosis and pharmacy recommendation.
 
-Previous Q&A:
-${recentHistory.map(h => `Q: ${h.ai}\nA: ${h.user}`).join('\n')}
+WHAT THE PATIENT HAS ALREADY TOLD YOU:
+"${knownFacts}"
 
-Turns completed: ${turnCount}
+THEIR LATEST MESSAGE:
+"${userInput}"
+
+QUESTIONS ALREADY ASKED (DO NOT REPEAT OR REPHRASE ANY OF THESE):
+${askedQuestions.length ? askedQuestions.map((q, i) => `${i + 1}. ${q}`).join('\n') : 'None yet'}
+
+TURNS COMPLETED: ${turnCount}
+
+YOUR TASK:
+- Read everything the patient said carefully
+- Identify the single most important GAP in information still needed
+- Ask exactly ONE short, specific follow-up question about that gap
+- The question MUST directly relate to what the patient described — never generic
+- After 6+ turns with sufficient info, reply with only: REPORT_READY
 
 STRICT RULES:
-- Ask the ONE question that most directly fills a gap needed to produce outputs 1 and 2 above
-- Focus on: symptom specifics, duration, severity, age/weight if relevant, allergies, current medications, tried treatments
-- After 6+ turns, if you have enough for both outputs, respond with ONLY the single token: REPORT_READY
-- NEVER repeat or rephrase: ${previousQuestions.length ? previousQuestions.slice(-8).map((q,i) => `${i+1}. ${q}`).join(' | ') : 'none yet'}
-- Output the question ONLY — no explanation, no preamble`;
+- Never repeat or rephrase a previous question
+- Never ask about something the patient already mentioned
+- Never ask two questions at once
+- Output the question ONLY — no preamble, no explanation`;
 
             const text = await safeGeminiCall(prompt);
-            if (/^REPORT_READY[.!]?$/i.test(text) || text.toLowerCase().includes('report_ready')) {
+            if (/^REPORT_READY[.!]?$/i.test(text.trim()) || text.toLowerCase().includes('report_ready')) {
                 showReportReadyBanner();
                 return "I now have enough information to generate your full report. You can add more details or click <strong>Download PDF Report</strong> when ready.";
             }
@@ -844,22 +801,24 @@ Conversation: ${history.map(h => `Patient: ${h.user}`).join(' | ')}`;
         async function startAnalysis() {
             const consent = document.getElementById('consent-checkbox');
             if (!consent || !consent.checked) { alert("Please check the consent box to continue."); return; }
-            const email = document.getElementById('email-input').value.trim();
-            const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-            if (!email || !emailRe.test(email)) { alert("Please enter a valid email address"); return; }
-            currentEmail = email; userData.email = email;
+            const concern = document.getElementById('concern-input').value.trim();
+            if (!concern) { alert("Please describe your health concern to get started."); return; }
             currentFullName = document.getElementById('fullname-input').value.trim();
             userData.fullName = currentFullName;
+            userData.currentInput = concern;
+            // Pre-load first user input so AI has context immediately
+            userData.conversationHistory.push({ user: concern, ai: "" });
             document.getElementById('landing-page').classList.add('hidden');
             document.getElementById('input-page').classList.remove('hidden');
             const questionEl = document.getElementById('current-question');
             questionEl.innerHTML = '<span class="typing-dot">●</span><span class="typing-dot">●</span><span class="typing-dot">●</span>';
             updateLiveReport();
             try {
-                const text = await safeGeminiCall("You are a professional medical intake AI starting a new patient session. Ask the single best opening question to understand the patient's main health concern. One sentence only. Do not explain. Just the question.");
-                questionEl.innerHTML = text;
+                const firstQuestion = await getNextQuestionFromAI(concern);
+                userData.conversationHistory[0].ai = firstQuestion;
+                questionEl.innerHTML = firstQuestion;
             } catch(e) {
-                questionEl.innerHTML = "What is your main health concern right now?";
+                questionEl.innerHTML = "How long have you been experiencing this?";
             }
             document.getElementById('user-input').focus();
         }
