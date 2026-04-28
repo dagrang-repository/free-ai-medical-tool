@@ -274,12 +274,9 @@
         // ============================================
         const GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyDyehxnYpfXeoxMglhmEoTCuISYxolXH6Q";
         const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/fZu00jdsW2O46jm6955ZC07";
-        const EMAILJS_SERVICE_ID = "YOUR_SERVICE_ID_HERE";
-        const EMAILJS_TEMPLATE_ID = "YOUR_TEMPLATE_ID_HERE";
-        const EMAILJS_PUBLIC_KEY = "YOUR_PUBLIC_KEY_HERE";
 
         // ============================================
-        // SAFE GEMINI CALL WRAPPER (Grok's bulletproof version)
+        // SAFE GEMINI CALL WRAPPER
         // ============================================
         async function safeGeminiCall(prompt, fallbackMessage = "Sorry, I couldn't process that. Please try again.") {
             const response = await fetch(GEMINI_ENDPOINT, {
@@ -396,6 +393,8 @@
             const consentBox = document.getElementById('consent-checkbox');
             const startBtn = document.getElementById('start-button');
             if (consentBox && startBtn) consentBox.addEventListener('change', () => { startBtn.disabled = !consentBox.checked; });
+
+            // AUTO-SAVE: only when on input-page
             let saveTimer = null;
             ['input','change','click'].forEach(evt => {
                 document.addEventListener(evt, () => {
@@ -408,8 +407,28 @@
                     }, 1500);
                 }, { passive: true });
             });
+
+            // FIX 1: Restore banner — only show if real session data exists
             const saved = localStorage.getItem('myai_health_session');
-            if (saved) { try { const parsed = JSON.parse(saved); if (parsed && parsed.userData && (parsed.userData.currentInput || (parsed.userData.conditions && parsed.userData.conditions.length))) showRestorePrompt(parsed); } catch(e) {} }
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    if (
+                        parsed &&
+                        parsed.userData &&
+                        parsed.userData.conversationHistory &&
+                        parsed.userData.conversationHistory.length > 0
+                    ) {
+                        showRestorePrompt(parsed);
+                    } else {
+                        // Stale/empty session — clean it up silently
+                        localStorage.removeItem('myai_health_session');
+                    }
+                } catch(e) {
+                    localStorage.removeItem('myai_health_session');
+                }
+            }
+
             console.log('%c[MyAI Health] Fully initialized', 'color:#14b8a6');
         }
 
@@ -776,19 +795,16 @@ Conversation: ${history.map(h => `Patient: ${h.user}`).join(' | ')}`;
             const addPage = () => { doc.addPage(); y = 20; };
             const checkY = (needed = 10) => { if (y + needed > pageH - 20) addPage(); };
 
-            // Header bar
             doc.setFillColor(15, 118, 110);
             doc.rect(0, 0, pageW, 14, 'F');
             doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(255, 255, 255);
             doc.text("MY AI MEDICAL ANALYSIS REPORT", margin, 9);
             doc.setTextColor(0, 0, 0); y = 22;
 
-            // Patient info
             doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.setTextColor(100, 116, 139);
             const patientLine = `${currentFullName ? currentFullName + ' · ' : ''}${currentEmail} · ${new Date().toLocaleDateString()}`;
             doc.text(patientLine, margin, y); y += 10;
 
-            // Parse sections
             const sections = reportText.split(/\n---\n/);
             sections.forEach(section => {
                 const lines = section.trim().split('\n');
@@ -806,7 +822,7 @@ Conversation: ${history.map(h => `Patient: ${h.user}`).join(' | ')}`;
                     doc.setFillColor(240, 253, 250);
                     doc.rect(margin, y, contentW, 9, 'F');
                     doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(15, 118, 110);
-                    doc.text("💊 PHARMACY CARD", margin + 4, y + 6); y += 11;
+                    doc.text("PHARMACY CARD", margin + 4, y + 6); y += 11;
                     doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.setTextColor(51, 65, 85);
                     boxLines.forEach(line => { checkY(6); doc.text(line, margin + 4, y); y += 6; }); y += 6;
                 } else {
@@ -819,7 +835,6 @@ Conversation: ${history.map(h => `Patient: ${h.user}`).join(' | ')}`;
                 }
             });
 
-            // Footer on each page
             const totalPages = doc.internal.getNumberOfPages();
             const toolUrl = window.location.hostname !== 'localhost' ? window.location.href : 'myaihealth.app';
             for (let i = 1; i <= totalPages; i++) {
@@ -988,7 +1003,10 @@ Conversation: ${userData.conversationHistory.map(h => `Patient: ${h.user}`).join
                 renderConditionThreads(); updateLiveReport(); banner.remove();
                 showToast(`Session restored — step ${currentStep}`);
             };
-            document.getElementById('restore-no').onclick = () => banner.remove();
+            document.getElementById('restore-no').onclick = () => {
+                localStorage.removeItem('myai_health_session');
+                banner.remove();
+            };
             setTimeout(() => { if (banner.parentNode) banner.remove(); }, 12000);
         }
 
