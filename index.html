@@ -21,7 +21,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <!-- WebLLM removed for mobile performance (fallback to 5-layer engine) -->
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Space+Grotesk:wght@500;600&display=swap');
         
         :root {
             --primary: #0f766e;
@@ -95,12 +95,6 @@
             font-weight: 600;
             color: #0f766e;
             margin-bottom: 0.75rem;
-        }
-
-        .depth-meter {
-            height: 6px;
-            background: linear-gradient(to right, #14b8a6, #0f766e);
-            transition: width 0.4s ease;
         }
 
         .report-preview {
@@ -213,7 +207,6 @@
             .urgency-banner,
             .report-section,
             .medical-card,
-            .depth-meter,
             .step-card,
             .suggestion-item {
                 animation: none !important;
@@ -358,12 +351,17 @@
             </div>
 
             <div class="max-w-md mx-auto">
+                <form id="start-form" autocomplete="on" onsubmit="startAnalysis(); return false;">
                 <div class="mb-4 text-left">
                     <label for="email-input" class="block text-sm font-medium text-slate-800 mb-2">Your email <span class="text-slate-500 font-normal">(for report delivery)</span></label>
-                    <form autocomplete="on" onsubmit="return false;">
                     <input id="email-input" type="email" name="email" placeholder="you@example.com" autocomplete="email" inputmode="email"
                            class="w-full px-5 py-3.5 border-2 border-slate-200 focus:border-teal-600 rounded-3xl text-base bg-white outline-none transition-all placeholder:text-slate-400 text-slate-900">
-                    </form>
+                </div>
+
+                <div class="mb-4 text-left">
+                    <label for="fullname-input" class="block text-sm font-medium text-slate-800 mb-2">Full name <span class="text-slate-500 font-normal">(optional — appears on your report)</span></label>
+                    <input id="fullname-input" type="text" name="fullname" placeholder="e.g. Jean Dupont" autocomplete="name"
+                           class="w-full px-5 py-3.5 border-2 border-slate-200 focus:border-teal-600 rounded-3xl text-base bg-white outline-none transition-all placeholder:text-slate-400 text-slate-900">
                 </div>
                 
                 <div class="mb-5 flex items-start gap-3 text-left bg-slate-50 border border-slate-200 rounded-2xl p-4">
@@ -373,11 +371,12 @@
                     </label>
                 </div>
 
-                <button onclick="startAnalysis()" 
+                <button type="submit"
                         class="w-full py-4 bg-teal-700 hover:bg-teal-800 active:bg-teal-900 transition-all text-white font-semibold rounded-3xl text-base shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                         id="start-button" disabled>
                     Begin Private Analysis
                 </button>
+                </form>
                 
                 <div class="mt-5">
                     <button onclick="showRestoreModal()" 
@@ -487,8 +486,8 @@
                     
                     <button onclick="sendReport()" 
                             class="mt-3 w-full py-3.5 bg-teal-700 hover:bg-teal-800 active:bg-teal-900 text-white font-semibold rounded-2xl text-sm transition-all shadow-sm flex items-center justify-center gap-x-2">
-                        <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
-                        <span>Send report by email</span>
+                        <i class="fa-solid fa-file-pdf" aria-hidden="true"></i>
+                        <span>Download PDF Report</span>
                     </button>
                 </div>
             </div>
@@ -501,8 +500,8 @@
             <i class="fa-solid fa-check text-emerald-600 text-5xl" aria-hidden="true"></i>
         </div>
         
-        <h2 class="text-3xl sm:text-4xl font-display font-semibold tracking-tight mb-3 text-slate-900">Report sent successfully</h2>
-        <p class="text-lg sm:text-xl text-slate-700 mb-8">Thank you. Your detailed report has been delivered to your email.</p>
+        <h2 class="text-3xl sm:text-4xl font-display font-semibold tracking-tight mb-3 text-slate-900">Report downloaded</h2>
+        <p class="text-lg sm:text-xl text-slate-700 mb-8">Your PDF report has been saved to your device.</p>
         
         <div class="max-w-md mx-auto bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 mb-8 text-left shadow-sm">
             <div class="font-semibold text-sm text-slate-900 mb-2">All data has been permanently deleted/purged from this browser.</div>
@@ -648,18 +647,42 @@
         const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/fZu00jdsW2O46jm6955ZC07";
 
         // ============================================
-        // GEMINI 2.0 FLASH (FREE)
+        // GEMINI 2.0 FLASH — via Cloudflare Worker proxy
+        // API key is server-side only (not exposed in client)
+        // Deploy worker: https://github.com/your-repo/gemini-proxy-worker
         // ============================================
-        const GEMINI_API_KEY = "AIzaSyAEYYeMyjtvFEBUdRJ-zPMzGpTl8MVbtGI";
-        const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+        const GEMINI_ENDPOINT = "https://gemini-proxy.YOUR_SUBDOMAIN.workers.dev/gemini";
+        // ↑ Replace with your actual CF Worker URL after deploying the worker below.
+        // Worker code (deploy at dash.cloudflare.com → Workers):
+        //
+        // export default {
+        //   async fetch(request, env) {
+        //     if (request.method !== 'POST') return new Response('Method Not Allowed', { status: 405 });
+        //     const origin = request.headers.get('Origin') || '';
+        //     // Restrict to your domain:
+        //     if (!origin.includes('YOUR_DOMAIN.com')) return new Response('Forbidden', { status: 403 });
+        //     const body = await request.json();
+        //     const resp = await fetch(
+        //       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${env.GEMINI_API_KEY}`,
+        //       { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+        //     );
+        //     const data = await resp.json();
+        //     return new Response(JSON.stringify(data), {
+        //       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': origin }
+        //     });
+        //   }
+        // };
+        // Add GEMINI_API_KEY as an env variable (secret) in the Worker settings — never in code.
 
         // ============================================
         // GLOBAL STATE
         // ============================================
         let currentEmail = "";
+        let currentFullName = "";
         let currentStep = 1;
         let userData = {
             email: "",
+            fullName: "",
             age: null,
             sex: null,
             country: null,
@@ -680,7 +703,6 @@
         
         let voiceListening = false;
         let recognition = null;
-        let depth = 12;
 
         // ============================================
         // TAILWIND + GOOGLE TRANSLATE + VOICE (unchanged)
@@ -848,82 +870,149 @@
         // ============================================
 
         async function getNextQuestionFromAI(userInput) {
-            // Exclude the current incomplete turn (last entry has ai:"") so Gemini doesn't see blank AI responses
             const history = userData.conversationHistory.slice(0, -1).filter(h => h.ai);
             const previousQuestions = history.map(h => h.ai).filter(Boolean);
+            const turnCount = history.length;
+            // Truncate to last 12 turns to prevent context overflow (#9)
+            const recentHistory = history.slice(-12);
 
-            const prompt = `You are a professional medical intake AI conducting a health intake interview.
+            const prompt = `You are a goal-driven medical intake AI. Your ONLY purpose is to gather enough information to produce TWO specific outputs for this patient:
+1. A concrete, actionable final solution to their problem
+2. A pharmacy-ready medication recommendation (specific drug name, form, dosage, OTC or prescription)
 
 Patient's latest answer: "${userInput}"
 
 Previous Q&A:
-${history.map(h => `Q: ${h.ai}\nA: ${h.user}`).join('\n')}
+${recentHistory.map(h => `Q: ${h.ai}\nA: ${h.user}`).join('\n')}
+
+Turns completed: ${turnCount}
 
 STRICT RULES:
-- Ask ONE new follow-up question based on the patient's latest answer
-- NEVER repeat or rephrase any of these already-asked questions: ${previousQuestions.length ? previousQuestions.map((q,i) => `${i+1}. ${q}`).join(' | ') : 'none yet'}
+- Ask the ONE question that most directly fills a gap needed to produce outputs 1 and 2 above
+- Focus on: symptom specifics, duration, severity, age/weight if relevant, allergies, current medications, tried treatments
+- After 6+ turns, if you have enough for both outputs, respond with ONLY the single token: REPORT_READY
+- NEVER repeat or rephrase: ${previousQuestions.length ? previousQuestions.slice(-8).map((q,i) => `${i+1}. ${q}`).join(' | ') : 'none yet'}
 - Output the question ONLY — no explanation, no preamble`;
 
             try {
                 const response = await fetch(GEMINI_ENDPOINT, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }]
-                    })
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                 });
                 const data = await response.json();
-                return data.candidates[0].content.parts[0].text.trim();
+                const text = data.candidates[0].content.parts[0].text.trim();
+
+                // Fuzzy REPORT_READY detection — handles Gemini variations (#2)
+                if (/^REPORT_READY[.!]?$/i.test(text) || text.toLowerCase().includes('report_ready')) {
+                    showReportReadyBanner();
+                    return "I now have enough information to generate your full report. You can add more details or click <strong>Download PDF Report</strong> when ready.";
+                }
+
+                return text;
             } catch (error) {
                 console.error("Gemini error:", error);
-                return "How long have you been experiencing this?";
+                throw error;
             }
+        }
+
+        function showReportReadyBanner() {
+            if (document.getElementById('report-ready-banner')) return;
+            const banner = document.createElement('div');
+            banner.id = 'report-ready-banner';
+            banner.className = 'fixed top-0 inset-x-0 z-[180] bg-teal-700 text-white py-3 px-6 flex items-center justify-between shadow-lg';
+            banner.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-circle-check text-xl"></i>
+                    <span class="font-semibold text-sm">Enough info collected — your report is ready to generate.</span>
+                </div>
+                <button id="report-ready-btn" class="px-4 py-2 bg-white text-teal-700 rounded-xl text-sm font-bold hover:bg-teal-50 shrink-0">
+                    Download PDF →
+                </button>
+            `;
+            document.body.prepend(banner);
+            document.getElementById('report-ready-btn').addEventListener('click', () => {
+                banner.remove(); // always remove banner first (#5)
+                sendReport();
+            });
         }
 
         async function generateFinalReportWithAI() {
             const history = userData.conversationHistory;
-            
-            const prompt = `You are an expert medical AI. Generate a clear, professional medical intake report.
+            const patientName = currentFullName || "Patient";
+            const patientEmail = currentEmail;
 
-Conversation:
-${history.map(h => `User: ${h.user}\nAI: ${h.ai}`).join('\n')}
+            const prompt = `You are a goal-driven medical AI. Based strictly on what the patient has said — do NOT assume or invent anything not mentioned — generate a structured medical intake report.
 
-Format exactly like this:
+Patient name: ${patientName}
+Conversation (use ONLY this as your source):
+${history.map(h => `Patient: ${h.user}`).join('\n')}
 
-**Patient Summary**
-[2-3 sentences]
+Generate the report in EXACTLY this format:
 
-**Key Symptoms & Timeline**
-- ...
+---
+PATIENT SUMMARY
+Name: ${patientName}
+Date: ${new Date().toLocaleDateString()}
+[2-3 sentences summarizing only what was stated — no assumptions]
 
-**Risk Assessment**
-- Cardiovascular: X/100
-- Metabolic: X/100
-- Respiratory: X/100
-- Mental: X/100
+---
+KEY SYMPTOMS & TIMELINE
+[Bullet list — only what patient explicitly described]
 
-**Recommended Next Steps**
-1. ...
-2. ...
+---
+FINAL SOLUTION
+[Concrete, specific actionable recommendation. What to do, in what order, starting today. No vague advice.]
 
-**Urgency Level**
-Low / Medium / High (with short reason)
+---
+PHARMACY CARD
+This section is a general pharmacist discussion guide only — not a prescription.
+Print or show this to your pharmacist. They will confirm suitability for your specific case.
 
-At the very end, on a new line, return ONLY this JSON (no label): {"cv":X,"met":X,"resp":X,"ment":X}`;
+Based on the described symptoms, the following medication CATEGORIES may be relevant:
+
+Option 1 — [Drug category / common name e.g. "Antihistamine (e.g. Cetirizine)"]
+• Typical form: [tablet / syrup / cream / nasal spray / etc]
+• General use pattern: [e.g. "Usually taken once daily — pharmacist will confirm dose for your age/weight"]
+• Availability: Commonly OTC / Usually prescription — verify locally
+• Ask your pharmacist about: [one specific question to ask, e.g. "Is this safe with my current blood pressure medication?"]
+
+Option 2 — [Drug category] (if applicable)
+• Typical form: ...
+• General use pattern: ...
+• Availability: ...
+• Ask your pharmacist about: ...
+
+⚠ If symptoms suggest prescription is needed: [One sentence on what type of specialist to consult and why — e.g. "See a GP for possible antibiotic prescription if bacterial infection is suspected"]
+
+---
+RISK ASSESSMENT
+• Cardiovascular: X/100
+• Metabolic: X/100
+• Respiratory: X/100
+• Mental health: X/100
+
+---
+URGENCY LEVEL
+[Low / Medium / High] — [one sentence reason]
+
+---
+DISCLAIMER
+This report is AI-generated for informational purposes only. It is not medical advice, diagnosis, or prescription. Always consult a qualified healthcare professional. The pharmacist or physician bears full responsibility for any treatment decision.
+
+At the very end append this JSON on its own line (no label): {"cv":X,"met":X,"resp":X,"ment":X}`;
 
             try {
                 const response = await fetch(GEMINI_ENDPOINT, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }]
-                    })
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                 });
                 const data = await response.json();
                 let fullText = data.candidates[0].content.parts[0].text;
 
-                // Extract and apply risk scores if present
-                const jsonMatch = fullText.match(/\{[^}]*"cv"[^}]*\}/);
+                // Extract and apply risk scores
+                const jsonMatch = fullText.match(/\{"cv":\s*\d+[^}]*\}/);
                 if (jsonMatch) {
                     try {
                         const scores = JSON.parse(jsonMatch[0]);
@@ -942,41 +1031,57 @@ At the very end, on a new line, return ONLY this JSON (no label): {"cv":X,"met":
             }
         }
 
+        // Rate limiting — max 1 Gemini call per 3 seconds
+        let _lastGeminiCall = 0;
+        const GEMINI_COOLDOWN_MS = 3000;
+
         async function nextStep() {
             const inputField = document.getElementById('user-input');
             const input = inputField.value.trim();
             if (!input) return;
 
-            // Disable button to prevent double-click
-            const nextBtn = document.querySelector('button[onclick="nextStep()"]');
-            if (nextBtn) nextBtn.disabled = true;
+            // Rate limit guard
+            const now = Date.now();
+            if (now - _lastGeminiCall < GEMINI_COOLDOWN_MS) {
+                showToast("Please wait a moment before continuing...");
+                return;
+            }
 
+            const nextBtn = document.querySelector('button[onclick="nextStep()"]');
+            const questionEl = document.getElementById('current-question');
+
+            if (nextBtn) nextBtn.disabled = true;
             userData.currentInput = input;
             userData.conversationHistory.push({ user: input, ai: "" });
-
             updateLiveReport();
-
-            const questionEl = document.getElementById('current-question');
             questionEl.innerHTML = '<span class="typing-dot">●</span><span class="typing-dot">●</span><span class="typing-dot">●</span>';
 
-            const nextQuestion = await getNextQuestionFromAI(input);
-            userData.conversationHistory[userData.conversationHistory.length - 1].ai = nextQuestion;
-
-            currentStep++;
-            document.getElementById('current-step').innerText = String(currentStep).padStart(2, '0');
-            questionEl.innerHTML = nextQuestion;
-            
-            inputField.value = '';
-            inputField.focus();
-            if (nextBtn) nextBtn.disabled = false;
-
-            // Update depth meter
-            updateDepthMeter(Math.min(8, Math.floor(88 / 12)));
-
-            // Fetch AI solutions every 3 turns
-            if (currentStep % 3 === 0) fetchAISolutions();
-
-            checkForRedFlags();
+            try {
+                _lastGeminiCall = Date.now();
+                const nextQuestion = await getNextQuestionFromAI(input);
+                userData.conversationHistory[userData.conversationHistory.length - 1].ai = nextQuestion;
+                currentStep++;
+                document.getElementById('current-step').innerText = String(currentStep).padStart(2, '0');
+                questionEl.innerHTML = nextQuestion;
+                inputField.value = '';
+                inputField.focus();
+                if (currentStep % 3 === 0) fetchAISolutions();
+                checkForRedFlags();
+            } catch(e) {
+                userData.conversationHistory.pop();
+                questionEl.innerHTML = `<span style="color:#ef4444;">⚠ Connection issue — please check your internet and try again.</span>`;
+                // Named retry button — no duplicate listener risk
+                const retryBtn = document.createElement('button');
+                retryBtn.textContent = '↩ Retry';
+                retryBtn.style.cssText = 'display:block;margin-top:12px;padding:8px 18px;background:#0f766e;color:white;border:none;border-radius:12px;cursor:pointer;font-size:14px;';
+                retryBtn.addEventListener('click', () => {
+                    inputField.value = input; // restore their answer
+                    nextStep();
+                }, { once: true }); // once: true prevents stacking
+                questionEl.appendChild(retryBtn);
+            } finally {
+                if (nextBtn) nextBtn.disabled = false;
+            }
         }
 
         function prevStep() {
@@ -1178,13 +1283,15 @@ Conversation: ${history.map(h => `User: ${h.user}`).join(' | ')}`;
         
         function checkForRedFlags() {
             const input = userData.currentInput.toLowerCase();
-            const redFlags = ["chest pain", "shortness of breath", "left arm", "jaw pain", "sudden severe headache"];
-            
-            const hasRedFlag = redFlags.some(flag => input.includes(flag));
-            
-            if (hasRedFlag) {
-                showUrgencyBanner();
-            }
+            const redFlags = [
+                "chest pain", "chest tightness", "shortness of breath", "can't breathe", "cannot breathe",
+                "left arm", "jaw pain", "crushing pain", "sudden severe headache", "worst headache",
+                "suicidal", "want to die", "kill myself", "end my life", "overdose",
+                "coughing blood", "vomiting blood", "loss of consciousness", "passed out",
+                "stroke", "paralysis", "face drooping", "slurred speech", "severe bleeding",
+                "allergic reaction", "can't swallow", "throat closing"
+            ];
+            if (redFlags.some(flag => input.includes(flag))) showUrgencyBanner();
         }
         
         function showUrgencyBanner() {
@@ -1208,12 +1315,6 @@ Conversation: ${history.map(h => `User: ${h.user}`).join(' | ')}`;
             }, 6500);
         }
 
-        function updateDepthMeter(increase) {
-            depth = Math.min(100, depth + increase);
-            document.getElementById('depth-meter').style.width = depth + '%';
-            document.getElementById('depth-value').innerText = depth + '%';
-        }
-
         // ============================================
         // START ANALYSIS
         // ============================================
@@ -1233,6 +1334,8 @@ Conversation: ${history.map(h => `User: ${h.user}`).join(' | ')}`;
             
             currentEmail = email;
             userData.email = email;
+            currentFullName = document.getElementById('fullname-input').value.trim();
+            userData.fullName = currentFullName;
             
             document.getElementById('landing-page').classList.add('hidden');
             document.getElementById('input-page').classList.remove('hidden');
@@ -1260,47 +1363,43 @@ Conversation: ${history.map(h => `User: ${h.user}`).join(' | ')}`;
             document.getElementById('user-input').focus();
         }
 
+        // Cache final report to avoid double Gemini call
+        let _cachedFinalReport = null;
+
+        async function getFinalReport() {
+            if (_cachedFinalReport) return _cachedFinalReport;
+            _cachedFinalReport = await generateFinalReportWithAI();
+            return _cachedFinalReport;
+        }
+
         // ============================================
-        // SEND REPORT FLOW (Send by Email as PDF)
+        // SEND REPORT FLOW
         // ============================================
         function sendReport() {
-            downloadJSON();
-            
+            if (userData.conversationHistory.length === 0) {
+                showToast("Complete at least one question first");
+                return;
+            }
+
             const modal = document.createElement('div');
             modal.className = `fixed inset-0 bg-black/70 z-[200] flex items-center justify-center`;
             modal.innerHTML = `
                 <div class="bg-white max-w-md mx-4 rounded-3xl p-8 text-center">
-                    <div class="text-6xl mb-4">📧</div>
-                    <div class="font-semibold text-2xl mb-4">Send Report by Email</div>
-                    
+                    <div class="text-6xl mb-4">📄</div>
+                    <div class="font-semibold text-2xl mb-4">Download Your PDF Report</div>
                     <div class="text-sm text-slate-600 mb-6 leading-relaxed">
-                        Your AI-generated medical analysis will be sent as a professional PDF report to your email.<br><br>
-                        <strong>All local data will be permanently deleted</strong> after sending.
+                        Your AI-generated medical analysis will be saved as a PDF to your device.<br><br>
+                        <strong>All local data will be permanently deleted</strong> after download.
                     </div>
-                    
                     <div class="flex gap-3">
                         <button onclick="this.closest('.fixed').remove()" 
                                 class="flex-1 py-3 border border-slate-300 rounded-2xl font-medium">Cancel</button>
-                        
                         <button onclick="confirmAndSendPDFAndEmail(this)" 
-                                class="flex-1 py-3 bg-teal-700 hover:bg-teal-800 text-white rounded-2xl font-semibold">Send as PDF</button>
+                                class="flex-1 py-3 bg-teal-700 hover:bg-teal-800 text-white rounded-2xl font-semibold">Download PDF</button>
                     </div>
                 </div>
             `;
             document.body.appendChild(modal);
-        }
-        
-        function confirmAndSend(element) {
-            const modal = element.closest('.fixed');
-            
-            sendViaEmailJS().then(() => {
-                modal.remove();
-                purgeAllData();
-                showSuccessPage();
-            }).catch(() => {
-                modal.remove();
-                showFallbackDownload();
-            });
         }
 
         async function confirmAndSendPDFAndEmail(element) {
@@ -1310,13 +1409,8 @@ Conversation: ${history.map(h => `User: ${h.user}`).join(' | ')}`;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating...';
 
             try {
-                // 1. Generate and download PDF (primary delivery)
-                await exportReportAsPDF();
-
-                // 2. Attempt EmailJS if configured (secondary delivery)
+                await exportReportAsPDF(); // uses getFinalReport() internally — single Gemini call
                 modal.remove();
-                await sendViaEmailJS().catch(() => {}); // silent fail if not configured
-
                 purgeAllData();
                 showSuccessPage();
             } catch(e) {
@@ -1435,8 +1529,13 @@ Conversation: ${history.map(h => `User: ${h.user}`).join(' | ')}`;
                 }).catch(() => {});
             }
             
-            userData = { email: "", age: null, sex: null, country: null, conditions: [], currentInput: "", conversationHistory: [], reportHistory: [] };
+            userData = { email: "", fullName: "", age: null, sex: null, country: null, conditions: [], currentInput: "", conversationHistory: [], reportHistory: [] };
             liveReport = { summary: "", solutions: [], medications: [], timeline: [], riskScores: { cardiovascular: 35, metabolic: 28, respiratory: 42, mental: 19 }, bodySystems: ["respiratory"] };
+            _cachedFinalReport = null;
+            _cachedSolutions = ["Describe your symptoms above to get AI-powered recommendations..."];
+            _solutionFetchStep = -1;
+            currentFullName = "";
+            currentEmail = "";
             
             console.log('%c[Security] All browser data purged', 'color:#ef4444');
         }
@@ -1528,37 +1627,125 @@ Conversation: ${history.map(h => `User: ${h.user}`).join(' | ')}`;
         // PDF EXPORT WITH PAGINATION
         // ============================================
         async function exportReportAsPDF() {
-            let reportText = await generateFinalReportWithAI();
-
-            reportText = reportText
-                .replace(/\*\*(.*?)\*\*/g, '$1')
-                .replace(/\*(.*?)\*/g, '$1')
-                .replace(/#{1,6}\s?/g, '')
-                .replace(/^\s*-\s*/gm, '• ');
+            let reportText = await getFinalReport();
 
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
+            const pageW = doc.internal.pageSize.getWidth();
+            const pageH = doc.internal.pageSize.getHeight();
+            const margin = 20;
+            const contentW = pageW - margin * 2;
+            let y = 20;
 
+            const addPage = () => {
+                doc.addPage();
+                y = 20;
+            };
+
+            const checkY = (needed = 10) => {
+                if (y + needed > pageH - 15) addPage();
+            };
+
+            // Header
+            doc.setFillColor(15, 118, 110);
+            doc.rect(0, 0, pageW, 14, 'F');
             doc.setFont("helvetica", "bold");
-            doc.setFontSize(18);
-            doc.text("My AI Medical Analysis Report", 20, 20);
-
             doc.setFontSize(11);
+            doc.setTextColor(255, 255, 255);
+            doc.text("MY AI MEDICAL ANALYSIS REPORT", margin, 9);
+            doc.setTextColor(0, 0, 0);
+            y = 22;
+
+            // Patient info line
             doc.setFont("helvetica", "normal");
+            doc.setFontSize(9);
+            doc.setTextColor(100, 116, 139);
+            const patientLine = `${currentFullName ? currentFullName + ' · ' : ''}${currentEmail} · ${new Date().toLocaleDateString()}`;
+            doc.text(patientLine, margin, y);
+            y += 10;
 
-            const lines = doc.splitTextToSize(reportText, 170);
-            let y = 35;
+            // Parse sections
+            const sections = reportText.split(/\n---\n/);
 
-            lines.forEach(line => {
-                if (y > 270) {
-                    doc.addPage();
-                    y = 20;
+            sections.forEach(section => {
+                const lines = section.trim().split('\n');
+                const heading = lines[0].trim();
+                const body = lines.slice(1).join('\n').trim();
+
+                if (!heading) return;
+
+                const isPharmacy = /pharmacy|medication|drug|rx/i.test(heading);
+
+                checkY(14);
+
+                if (isPharmacy) {
+                    // Pharmacy card box
+                    const boxLines = doc.splitTextToSize(body, contentW - 10);
+                    const boxH = boxLines.length * 6 + 18;
+                    checkY(boxH);
+
+                    doc.setDrawColor(15, 118, 110);
+                    doc.setLineWidth(0.6);
+                    doc.rect(margin, y, contentW, boxH);
+
+                    doc.setFillColor(240, 253, 250);
+                    doc.rect(margin, y, contentW, 9, 'F');
+
+                    doc.setFont("helvetica", "bold");
+                    doc.setFontSize(10);
+                    doc.setTextColor(15, 118, 110);
+                    doc.text("💊 PHARMACY CARD", margin + 4, y + 6);
+                    y += 11;
+
+                    doc.setFont("helvetica", "normal");
+                    doc.setFontSize(9);
+                    doc.setTextColor(51, 65, 85);
+                    boxLines.forEach(line => {
+                        checkY(6);
+                        doc.text(line, margin + 4, y);
+                        y += 6;
+                    });
+                    y += 6;
+
+                } else {
+                    // Section heading
+                    doc.setFont("helvetica", "bold");
+                    doc.setFontSize(11);
+                    doc.setTextColor(15, 118, 110);
+                    doc.text(heading, margin, y);
+                    y += 2;
+
+                    // Underline
+                    doc.setDrawColor(20, 184, 166);
+                    doc.setLineWidth(0.3);
+                    doc.line(margin, y, margin + contentW, y);
+                    y += 5;
+
+                    // Body
+                    doc.setFont("helvetica", "normal");
+                    doc.setFontSize(10);
+                    doc.setTextColor(30, 41, 59);
+                    const bodyLines = doc.splitTextToSize(body, contentW);
+                    bodyLines.forEach(line => {
+                        checkY(7);
+                        doc.text(line, margin, y);
+                        y += 7;
+                    });
+                    y += 4;
                 }
-                doc.text(line, 20, y);
-                y += 7;
             });
 
-            doc.save(`AI_Medical_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+            // Footer on each page
+            const totalPages = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= totalPages; i++) {
+                doc.setPage(i);
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(8);
+                doc.setTextColor(148, 163, 184);
+                doc.text(`Page ${i} of ${totalPages} · AI-generated report · Not medical advice`, margin, pageH - 8);
+            }
+
+            doc.save(`AI_Medical_Report_${currentFullName ? currentFullName.replace(/\s+/g,'_') + '_' : ''}${new Date().toISOString().split('T')[0]}.pdf`);
         }
 
         // ============================================
@@ -1836,7 +2023,7 @@ Conversation: ${history.map(h => `User: ${h.user}`).join(' | ')}`;
                     if (!document.getElementById('input-page').classList.contains('hidden')) {
                         try {
                             localStorage.setItem('myai_health_session', JSON.stringify({
-                                userData, liveReport, currentStep, currentEmail
+                                userData, liveReport, currentStep, currentEmail, currentFullName
                             }));
                         } catch(e) {
                             console.warn('[AutoSave] localStorage quota or unavailable:', e);
@@ -1872,14 +2059,30 @@ Conversation: ${history.map(h => `User: ${h.user}`).join(' | ')}`;
             `;
             document.body.appendChild(banner);
             document.getElementById('restore-yes').onclick = () => {
+                // Restore all state (#4)
                 userData = parsed.userData || userData;
                 liveReport = parsed.report || liveReport;
-                currentEmail = parsed.email || "";
+                currentEmail = parsed.currentEmail || parsed.email || "";
+                currentFullName = parsed.currentFullName || userData.fullName || "";
+                currentStep = parsed.currentStep || userData.conversationHistory.length || 1;
+
+                document.getElementById('current-step').innerText = String(currentStep).padStart(2, '0');
+
+                // Restore last AI question
+                const lastTurn = userData.conversationHistory.filter(h => h.ai).slice(-1)[0];
+                const questionEl = document.getElementById('current-question');
+                if (lastTurn && lastTurn.ai) {
+                    questionEl.innerHTML = lastTurn.ai;
+                } else {
+                    questionEl.innerHTML = "What is your main health concern right now?";
+                }
+
                 document.getElementById('landing-page').classList.add('hidden');
                 document.getElementById('input-page').classList.remove('hidden');
                 renderConditionThreads();
                 updateLiveReport();
                 banner.remove();
+                showToast(`Session restored — step ${currentStep}`);
             };
             document.getElementById('restore-no').onclick = () => banner.remove();
             setTimeout(() => { if (banner.parentNode) banner.remove(); }, 12000);
