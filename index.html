@@ -118,6 +118,15 @@
             border: none;
             display: flex;
             align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 50;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            animation: heartBreathe 4s ease-in-out infinite;
+            overflow: visible;
+            padding: 0;
+        }
 
         /* ── Floating Share Button ── */
         .floating-share {
@@ -628,8 +637,40 @@
     </main>
 
     <!-- FLOATING SHARE -->
-    <button id="share-btn" type="button" aria-label="Share this tool" class="floating-share" onclick="showShareModal()">
-        <i class="fa-solid fa-share-nodes" aria-hidden="true"></i>
+    <button id="share-btn" type="button" aria-label="Share this tool" onclick="showShareModal()" style="
+        position: fixed;
+        bottom: max(6px, env(safe-area-inset-bottom, 6px));
+        left: max(6px, env(safe-area-inset-left, 6px));
+        width: 32px;
+        height: 32px;
+        border-radius: 9999px;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        z-index: 50;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+        animation: shareBreathe 4s ease-in-out infinite;
+        overflow: visible;
+    ">
+        <span style="
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.01em;
+            color: #14b8a6;
+            text-shadow:
+                0 1px 0 #0f766e,
+                0 0 8px rgba(20,184,166,0.9),
+                0 0 18px rgba(20,184,166,0.55);
+            filter: drop-shadow(0 1px 3px rgba(0,0,0,0.3));
+            animation: shareIconPulse 4s ease-in-out infinite;
+            line-height: 1;
+            user-select: none;
+        ">Share</span>
     </button>
 
     <!-- FLOATING HEART -->
