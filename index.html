@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta http-equiv="content-language" content="en">
+    <meta name="description" content="Free AI-powered medical analysis tool. Private, browser-based health insights with no data storage. Not medical advice — for informational purposes only.">
+    <meta name="theme-color" content="#0f766e">
+    <meta name="color-scheme" content="light">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="robots" content="index, follow">
+    <meta property="og:title" content="My AI-Powered Medical Analysis • Free Forever">
+    <meta property="og:description" content="Private, AI-powered medical insights. Browser-only. No data stored.">
+    <meta property="og:type" content="website">
+    <title>My AI-Powered Medical Analysis • Free Forever</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-E84CDQWWZV"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-E84CDQWWZV');
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Space+Grotesk:wght@500;600&display=swap');
+        :root { --primary: #0f766e; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: #f8fafc; color: #0f172a; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
+        *, *::before, *::after { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        input, textarea, button, select { font-family: inherit; font-size: inherit; }
+        .skip-link { position: absolute; top: -100px; left: 0; background: #0f766e; color: white; padding: 12px 20px; z-index: 1000; text-decoration: none; border-radius: 0 0 12px 0; }
+        .skip-link:focus { top: 0; }
+        :focus-visible { outline: 3px solid #14b8a6; outline-offset: 2px; border-radius: 4px; }
+        .font-display { font-family: 'Space Grotesk', 'Inter', sans-serif; font-weight: 600; }
+        .floating-heart { position: fixed; bottom: max(6px, env(safe-area-inset-bottom, 6px)); right: max(6px, env(safe-area-inset-right, 6px)); width: 32px; height: 32px; background: transparent; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 50; -webkit-tap-highlight-color: transparent; touch-action: manipulation; animation: heartBreathe 4s ease-in-out infinite; overflow: visible; padding: 0; }
+        .floating-heart::after { content: ''; position: absolute; top: 2px; left: 6px; width: 4px; height: 4px; background: white; border-radius: 50%; box-shadow: 0 0 5px 2px rgba(255,255,255,0.95), 0 0 12px 3px rgba(255,220,230,0.7); opacity: 0; pointer-events: none; z-index: 4; animation: sparkle 4s ease-in-out infinite; }
+        .floating-heart i { position: relative; z-index: 3; color: #f43f5e; font-size: 28px; text-shadow: 0 1px 0 #be123c, 0 2px 0 #9f1239, 0 -1px 1px rgba(255,200,210,0.85), 0 0 10px rgba(244,63,94,0.8), 0 0 18px rgba(244,63,94,0.45); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.45)); animation: heartIconBeat 4s ease-in-out infinite; transform-origin: center; }
+        @keyframes heartBreathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        @keyframes heartIconBeat { 0%, 100% { transform: scale(1); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.45)) drop-shadow(0 0 6px rgba(244,63,94,0.5)); } 50% { transform: scale(1.06); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.45)) drop-shadow(0 0 12px rgba(244,63,94,0.85)); } }
+        @keyframes sparkle { 0%, 40%, 60%, 100% { opacity: 0; transform: scale(0.3) rotate(0deg); } 50% { opacity: 0.9; transform: scale(1.3) rotate(45deg); } }
+        @keyframes shareBreathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        @keyframes shareIconPulse { 0%, 100% { filter: drop-shadow(0 1px 3px rgba(0,0,0,0.3)) drop-shadow(0 0 6px rgba(20,184,166,0.5)); } 50% { filter: drop-shadow(0 1px 3px rgba(0,0,0,0.3)) drop-shadow(0 0 14px rgba(20,184,166,0.9)); } }
+        .floating-heart:hover, .floating-heart:focus-visible { animation-play-state: paused; transform: scale(1.2); outline: 3px solid #14b8a6; outline-offset: 4px; border-radius: 9999px; }
+        .floating-heart:active { transform: scale(0.92); }
+        .report-preview { min-height: 400px; max-height: 70vh; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
+        .report-preview::-webkit-scrollbar { width: 6px; }
+        .report-preview::-webkit-scrollbar-track { background: transparent; }
+        .report-preview::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .typing-dot { display: inline-block; animation: typingBounce 1.2s infinite ease-in-out; font-size: 1.2em; color: #14b8a6; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typingBounce { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-4px); } }
+        .urgency-banner { animation: pulse 2s cubic-bezier(0.4,0,0.6,1) infinite; }
+        #donation-modal.is-open { display: flex !important; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .report-section { animation: fadeInUp 0.4s ease forwards; }
+        @media (prefers-reduced-motion: reduce) { .floating-heart, .urgency-banner, .report-section { animation: none !important; transition: none !important; } html { scroll-behavior: auto; } }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+    <script>
+        (function() {
+            document.addEventListener('click', function(e) {
+                const heart = e.target.closest('#donation-heart-btn, .floating-heart');
+                if (!heart) return;
+                e.preventDefault();
+                if (typeof window.showDonationModal === 'function') { window.showDonationModal(); return; }
+                window.open('https://buy.stripe.com/fZu00jdsW2O46jm6955ZC07', '_blank', 'noopener,noreferrer');
+            }, true);
+        })();
+    </script>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <header class="border-b border-slate-200 bg-white sticky top-0 z-40">
+        <div class="max-w-screen-xl mx-auto px-6 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-x-3">
+                <div class="w-9 h-9 bg-teal-700 rounded-2xl flex items-center justify-center">
+                    <i class="fa-solid fa-heart-pulse text-white text-2xl" aria-hidden="true"></i>
+                </div>
+                <div class="flex items-center gap-x-2">
+                    <span class="font-display text-2xl font-semibold tracking-tight">My AI Health</span>
+                    <span class="text-xs text-teal-700 font-semibold tracking-widest bg-teal-50 px-2 py-0.5 rounded-md">FREE</span>
+                </div>
+            </div>
+            <div id="google_translate_element"></div>
+            <div class="flex items-center gap-x-2 bg-slate-100 rounded-3xl px-3 py-1.5">
+                <i class="fa-solid fa-microphone text-teal-600" aria-hidden="true"></i>
+                <span class="text-sm font-medium text-slate-700">Voice</span>
+                <label class="relative inline-flex items-center cursor-pointer" aria-label="Toggle voice input">
+                    <input type="checkbox" id="voice-toggle" class="sr-only peer" onchange="toggleVoiceListening()">
+                    <div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-teal-600"></div>
+                </label>
+            </div>
+        </div>
+    </header>
+
+    <main id="main-content" role="main">
+        <!-- LANDING PAGE -->
+        <section id="landing-page" class="max-w-screen-md mx-auto px-6 pt-12 sm:pt-16 pb-24">
+            <div class="text-center">
+                <div class="mx-auto w-20 h-20 bg-gradient-to-br from-teal-700 to-teal-600 rounded-3xl flex items-center justify-center mb-8 shadow-lg">
+                    <i class="fa-solid fa-brain text-white text-5xl" aria-hidden="true"></i>
+                </div>
+                <h1 class="text-4xl sm:text-5xl md:text-6xl font-display font-semibold tracking-tight mb-4 text-slate-900 leading-[1.1]">
+                    My AI-Powered<br><span class="text-teal-700">Medical Analysis</span>
+                </h1>
+                <p class="text-lg sm:text-xl text-slate-700 max-w-md mx-auto mb-2 leading-relaxed">Advanced insights from the world's best medical knowledge — <span class="font-semibold text-teal-700">AI only</span>.</p>
+                <p class="text-sm text-slate-600 mb-10">Not a doctor. Not medical advice. For informational purposes only.</p>
+                <div class="max-w-md mx-auto mb-10 text-left bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                    <div class="font-semibold text-slate-900 mb-3 text-base">How it works</div>
+                    <ol class="space-y-3 text-slate-700 text-sm list-none p-0">
+                        <li class="flex gap-3"><span class="font-mono text-teal-700 font-semibold shrink-0">01</span><span>Describe your health in your own words (voice supported)</span></li>
+                        <li class="flex gap-3"><span class="font-mono text-teal-700 font-semibold shrink-0">02</span><span>AI asks focused questions to build your report</span></li>
+                        <li class="flex gap-3"><span class="font-mono text-teal-700 font-semibold shrink-0">03</span><span>Download PDF → everything is permanently deleted</span></li>
+                    </ol>
+                </div>
+                <div class="max-w-md mx-auto">
+                    <form id="start-form" autocomplete="on" onsubmit="startAnalysis(); return false;">
+                        <div class="mb-4 text-left">
+                            <label for="fullname-input" class="block text-sm font-medium text-slate-800 mb-2">Your name <span class="text-slate-500 font-normal">(optional — appears on your report)</span></label>
+                            <input id="fullname-input" type="text" name="fullname" placeholder="e.g. Jean Dupont" autocomplete="name"
+                                   class="w-full px-5 py-3.5 border-2 border-slate-200 focus:border-teal-600 rounded-3xl text-base bg-white outline-none transition-all placeholder:text-slate-400 text-slate-900">
+                        </div>
+                        <div class="mb-4 text-left">
+                            <label for="concern-input" class="block text-sm font-medium text-slate-800 mb-2">What brings you here today? <span class="text-slate-500 font-normal">(describe your main concern)</span></label>
+                            <textarea id="concern-input" name="concern" rows="3" placeholder="e.g. I've had a headache and fever for 2 days..."
+                                   class="w-full px-5 py-3.5 border-2 border-slate-200 focus:border-teal-600 rounded-3xl text-base bg-white outline-none transition-all placeholder:text-slate-400 text-slate-900 resize-none"></textarea>
+                        </div>
+                        <div class="mb-5 flex items-start gap-3 text-left bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                            <input type="checkbox" id="consent-checkbox" class="mt-0.5 w-5 h-5 accent-teal-600 shrink-0 cursor-pointer">
+                            <label for="consent-checkbox" class="text-sm text-slate-700 leading-snug cursor-pointer">
+                                I am <strong class="text-slate-900">18 years or older</strong>, I understand this is <strong class="text-slate-900">AI-only</strong>, provides correlations only, is <strong class="text-slate-900">not medical advice</strong>, and I take full responsibility for any decisions.
+                            </label>
+                        </div>
+                        <button type="submit" class="w-full py-4 bg-teal-700 hover:bg-teal-800 active:bg-teal-900 transition-all text-white font-semibold rounded-3xl text-base shadow-md disabled:opacity-50 disabled:cursor-not-allowed" id="start-button" disabled>
+                            Begin Private Analysis
+                        </button>
+                    </form>
+                    <div class="mt-5">
+                        <button onclick="showRestoreModal()" class="text-sm text-teal-700 hover:text-teal-800 font-medium flex items-center gap-x-2 mx-auto py-2 px-4">
+                            <i class="fa-solid fa-upload" aria-hidden="true"></i><span>Upload previous report (restore session)</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- INPUT PAGE -->
+        <section id="input-page" class="hidden max-w-screen-xl mx-auto px-6 pt-8 pb-24">
+            <div class="flex justify-end mb-6">
+                <div class="text-left sm:text-right">
+                    <div class="text-xs text-slate-600">Current step</div>
+                    <div id="current-step" class="font-mono text-2xl font-semibold text-teal-700">01</div>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+                <div class="lg:col-span-7">
+                    <div class="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 mb-6 shadow-sm">
+                        <h2 id="current-question" class="text-xl sm:text-2xl font-semibold text-slate-900 mb-6 leading-tight">What is your main health concern right now?</h2>
+                        <label for="user-input" class="sr-only">Your symptoms or health description</label>
+                        <textarea id="user-input" rows="4" class="w-full border-2 border-slate-200 focus:border-teal-600 rounded-3xl px-6 py-4 text-base resize-y min-h-[120px] outline-none text-slate-900 placeholder:text-slate-400 transition-all" placeholder="Type or speak naturally..."></textarea>
+                        <div class="flex items-center justify-between gap-3 mt-4">
+                            <button onclick="prevStep()" class="px-5 py-3 border-2 border-slate-300 text-slate-700 hover:bg-slate-50 rounded-2xl text-sm font-semibold flex items-center justify-center gap-x-2 transition-all">← Back</button>
+                            <button onclick="nextStep()" class="px-8 py-3 bg-teal-700 text-white hover:bg-teal-800 active:bg-teal-900 rounded-2xl text-sm font-semibold flex items-center justify-center gap-x-2 transition-all">Next →</button>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <div class="flex items-center justify-between mb-3 px-1 flex-wrap gap-2">
+                            <div class="text-sm font-semibold text-slate-800">Conditions tracked</div>
+                            <button onclick="addNewConditionThread()" class="text-xs px-4 py-2 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-xl text-slate-700 flex items-center gap-x-1.5 font-medium transition-all"><i class="fa-solid fa-plus text-xs" aria-hidden="true"></i><span>Add another condition</span></button>
+                        </div>
+                        <div id="condition-threads" class="flex flex-wrap gap-2"></div>
+                    </div>
+                </div>
+                <div class="lg:col-span-5">
+                    <div class="lg:sticky lg:top-24">
+                        <div class="flex items-center justify-between mb-3 px-1">
+                            <div class="font-semibold text-sm text-slate-800">Live Report Preview</div>
+                            <div class="text-xs text-teal-700 font-medium flex items-center gap-1.5"><span class="w-2 h-2 bg-teal-500 rounded-full animate-pulse" aria-hidden="true"></span><span>Updates instantly</span></div>
+                        </div>
+                        <div id="live-report-preview" class="report-preview bg-white border border-slate-200 rounded-3xl p-6 text-sm overflow-auto shadow-sm" aria-live="polite" aria-label="Live AI medical analysis preview"></div>
+                        <div class="mt-3 flex gap-2">
+                            <button onclick="showSecondOpinion()" class="flex-1 text-xs py-3 px-3 border border-slate-300 bg-white hover:bg-slate-50 active:bg-slate-100 rounded-2xl flex items-center justify-center gap-x-1.5 font-medium text-slate-700 transition-all"><i class="fa-solid fa-sync text-teal-600" aria-hidden="true"></i><span>Second opinion</span></button>
+                            <button onclick="showWhatIfModal()" class="flex-1 text-xs py-3 px-3 border border-slate-300 bg-white hover:bg-slate-50 active:bg-slate-100 rounded-2xl flex items-center justify-center gap-x-1.5 font-medium text-slate-700 transition-all"><i class="fa-solid fa-magic text-teal-600" aria-hidden="true"></i><span>What if?</span></button>
+                            <button onclick="speakReport()" class="flex-1 text-xs py-3 px-3 border border-slate-300 bg-white hover:bg-teal-50 active:bg-teal-100 rounded-2xl flex items-center justify-center gap-x-1.5 font-medium text-slate-700 transition-all" title="Read the current report aloud"><i class="fa-solid fa-volume-up text-teal-600" aria-hidden="true"></i><span>Speak</span></button>
+                        </div>
+                        <button onclick="sendReport()" class="mt-3 w-full py-3.5 bg-teal-700 hover:bg-teal-800 active:bg-teal-900 text-white font-semibold rounded-2xl text-sm transition-all shadow-sm flex items-center justify-center gap-x-2">
+                            <i class="fa-solid fa-file-pdf" aria-hidden="true"></i><span>Download PDF Report</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SUCCESS PAGE -->
+        <section id="success-page" class="hidden max-w-screen-md mx-auto px-6 py-16 text-center">
+            <div class="mx-auto w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mb-8">
+                <i class="fa-solid fa-check text-emerald-600 text-5xl" aria-hidden="true"></i>
+            </div>
+            <h2 class="text-3xl sm:text-4xl font-display font-semibold tracking-tight mb-3 text-slate-900">Report downloaded</h2>
+            <p class="text-lg sm:text-xl text-slate-700 mb-8">Your PDF report has been saved to your device.</p>
+            <div class="max-w-md mx-auto bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 mb-8 text-left shadow-sm">
+                <div class="font-semibold text-sm text-slate-900 mb-2">All data has been permanently deleted/purged from this browser.</div>
+                <div class="text-sm text-slate-700 leading-relaxed">The only way to restore this session is by uploading the JSON file you downloaded earlier.</div>
+            </div>
+            <div class="max-w-md mx-auto mb-10">
+                <div class="text-xs font-medium text-slate-600 mb-3">Built by the same person who made:</div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <a href="https://www.letsmeet-here.app" target="_blank" rel="noopener noreferrer" class="block p-4 border border-slate-200 bg-white rounded-2xl hover:border-teal-300 hover:shadow-md transition-all">
+                        <div class="flex items-center gap-x-3"><div class="text-2xl">🤝</div><div class="text-left"><div class="font-semibold text-sm text-slate-900">LetsMeet-Here</div><div class="text-xs text-slate-600">Find the perfect meeting venue</div></div></div>
+                    </a>
+                    <a href="https://www.securesvault.com" target="_blank" rel="noopener noreferrer" class="block p-4 border border-slate-200 bg-white rounded-2xl hover:border-teal-300 hover:shadow-md transition-all">
+                        <div class="flex items-center gap-x-3"><div class="text-2xl">🔒</div><div class="text-left"><div class="font-semibold text-sm text-slate-900">SecuresVault</div><div class="text-xs text-slate-600">Buy &amp; sell watches securely</div></div></div>
+                    </a>
+                </div>
+            </div>
+            <button onclick="restartApp()" class="px-10 py-3 bg-white border-2 border-slate-300 hover:bg-slate-50 hover:border-slate-400 text-slate-800 font-medium rounded-3xl text-sm transition-all">Start a new analysis</button>
+        </section>
+    </main>
+
+    <!-- FLOATING SHARE -->
+    <button id="share-btn" type="button" aria-label="Share this tool" onclick="showShareModal()" style="position:fixed;bottom:max(10px,env(safe-area-inset-bottom,10px));left:max(10px,env(safe-area-inset-left,10px));width:52px;height:28px;border-radius:9999px;background:rgba(15,118,110,0.92);border:1.5px solid rgba(20,184,166,0.7);cursor:pointer;z-index:50;padding:0 10px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;touch-action:manipulation;animation:shareBreathe 3s ease-in-out infinite;overflow:visible;box-shadow:0 0 10px rgba(20,184,166,0.7),0 0 22px rgba(20,184,166,0.4);">
+        <span style="font-size:11px;font-weight:800;letter-spacing:0.04em;color:#ffffff;text-shadow:0 0 8px rgba(255,255,255,0.9);line-height:1;user-select:none;">Share</span>
+    </button>
+
+    <!-- FLOATING HEART -->
+    <button id="donation-heart-btn" type="button" aria-label="Support this tool — donate" class="floating-heart shadow-xl">
+        <i class="fa-solid fa-heart text-3xl text-rose-500" aria-hidden="true"></i>
+    </button>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-slate-200 bg-white py-10 text-sm text-slate-700">
+        <div class="max-w-screen-xl mx-auto px-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div><div class="font-semibold text-slate-900 mb-2">Legal &amp; Disclaimers</div><div class="leading-relaxed text-sm">This is an AI-generated analysis for informational purposes only. It is <strong>not medical advice, diagnosis, or treatment</strong>. Always consult a qualified healthcare professional. No doctor-patient relationship is created. Use at your own risk.</div></div>
+                <div><div class="font-semibold text-slate-900 mb-2">Privacy &amp; Data</div><div class="leading-relaxed text-sm">All processing happens locally in your browser. No data is sent to any server except the Gemini API for AI processing. When you download the PDF, all local data is permanently deleted. We never store or sell your information.</div></div>
+                <div><div class="font-semibold text-slate-900 mb-2">Open Source Notice</div><div class="leading-relaxed text-sm">This tool is 100% open-source and free forever.<br><strong class="text-teal-700">Humble request:</strong> Please do not remove the donation heart or product links. They help keep this tool free for everyone. Thank you.</div></div>
+            </div>
+            <div class="mt-8 pt-6 border-t border-slate-200 text-center text-xs text-slate-600 space-y-1">
+                <div>Built with ❤️ by Sang DAGRANG • <a href="https://www.letsmeet-here.app" target="_blank" rel="noopener noreferrer" class="underline hover:text-teal-700 font-medium">letsmeet-here.app</a> • <a href="https://www.securesvault.com" target="_blank" rel="noopener noreferrer" class="underline hover:text-teal-700 font-medium">securesvault.com</a> • 2026</div>
+                <div class="text-slate-400 text-xs" id="app-version-display">v2026.04.28</div>
+                <div class="mt-2">
+                    <button onclick="nuclearClearData()" class="text-xs text-red-400 hover:text-red-600 underline">🗑 Clear all my data now</button>
+                </div>
+                <div class="text-slate-500">This tool is not a medical device under EU MDR, FDA 21 CFR, or any national healthcare regulation.</div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Donation Modal -->
+    <div id="donation-modal" role="dialog" aria-modal="true" aria-labelledby="donation-modal-title" onclick="if(event.target.id==='donation-modal')hideDonationModal()" class="hidden fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[100] items-end lg:items-center justify-center">
+        <div onclick="event.stopImmediatePropagation()" class="bg-white w-full lg:w-[440px] lg:rounded-3xl lg:m-4 rounded-t-3xl p-6 sm:p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-start mb-5">
+                <div><div class="text-3xl mb-1" aria-hidden="true">❤️</div><h3 id="donation-modal-title" class="font-semibold text-xl text-slate-900">Support this tool</h3></div>
+                <button onclick="hideDonationModal()" aria-label="Close" class="w-10 h-10 flex items-center justify-center text-2xl leading-none text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-full transition-all">&times;</button>
+            </div>
+            <div class="text-sm text-slate-700 mb-5 leading-relaxed">This tool is completely free and always will be. If it helped you, a contribution keeps it alive for everyone.</div>
+            <div class="text-xs bg-teal-50 border border-teal-200 text-teal-800 p-3 rounded-2xl mb-5 leading-relaxed"><i class="fa-solid fa-circle-info mr-1" aria-hidden="true"></i>Donations are declared income — this is my transparency pledge to you.</div>
+            <div class="flex gap-2 mb-4">
+                <button type="button" onclick="setDonationAmount(3)" class="flex-1 py-3 bg-slate-100 hover:bg-teal-50 hover:border-teal-400 active:bg-teal-100 text-sm font-semibold text-slate-800 rounded-2xl border-2 border-slate-200 transition-all">€3</button>
+                <button type="button" onclick="setDonationAmount(5)" class="flex-1 py-3 bg-slate-100 hover:bg-teal-50 hover:border-teal-400 active:bg-teal-100 text-sm font-semibold text-slate-800 rounded-2xl border-2 border-slate-200 transition-all">€5</button>
+                <button type="button" onclick="setDonationAmount(10)" class="flex-1 py-3 bg-slate-100 hover:bg-teal-50 hover:border-teal-400 active:bg-teal-100 text-sm font-semibold text-slate-800 rounded-2xl border-2 border-slate-200 transition-all">€10</button>
+                <button type="button" onclick="setDonationAmount(20)" class="flex-1 py-3 bg-slate-100 hover:bg-teal-50 hover:border-teal-400 active:bg-teal-100 text-sm font-semibold text-slate-800 rounded-2xl border-2 border-slate-200 transition-all">€20</button>
+            </div>
+            <div class="mb-5">
+                <label for="donation-amount" class="block text-sm font-medium text-slate-700 mb-2">Or enter custom amount</label>
+                <div class="flex items-center gap-2"><span class="text-2xl text-slate-700 font-semibold" aria-hidden="true">€</span><input type="number" id="donation-amount" value="5" min="1" inputmode="numeric" class="flex-1 px-4 py-3 bg-white border-2 border-slate-200 rounded-2xl text-xl font-semibold text-slate-900 focus:outline-none focus:border-teal-600 transition-all"></div>
+            </div>
+            <button onclick="donateCustom()" class="w-full py-4 bg-teal-700 hover:bg-teal-800 active:bg-teal-900 text-white font-semibold rounded-2xl text-base transition-all active:scale-[0.985] shadow-md flex items-center justify-center gap-2"><i class="fa-solid fa-heart" aria-hidden="true"></i><span>Donate via Stripe</span></button>
+            <div class="text-center text-xs text-slate-500 mt-4">Stripe handles the final amount at checkout</div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // CONFIGURATION
+        // ============================================
+        const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/fZu00jdsW2O46jm6955ZC07";
+
+        // ============================================
+        // WORKER ENDPOINT — all keys/models handled server-side
+        // ============================================
+        const WORKER_URL = "https://mute-wildflower-a16egemini-proxy.dagrang.workers.dev/";
+
+        let _lastSuccessfulResponse = null;
+        let _offlineQueue = [];
+        let _isOnline = navigator.onLine;
+        window.addEventListener('online', () => { _isOnline = true; _drainOfflineQueue(); });
+        window.addEventListener('offline', () => { _isOnline = false; });
+
+        async function _drainOfflineQueue() {
+            while (_offlineQueue.length > 0) {
+                const { prompt, resolve, reject } = _offlineQueue.shift();
+                try { resolve(await safeGeminiCall(prompt)); } catch(e) { reject(e); }
+            }
+        }
+
+        const _fallbackQuestions = [
+            "How long have you been experiencing this?",
+            "On a scale of 1–10, how severe is it?",
+            "Have you taken anything for it so far?",
+            "Do you have any known allergies or conditions?",
+            "Has this happened before?"
+        ];
+        let _fallbackQIdx = 0;
+
+        async function safeGeminiCall(prompt) {
+            if (!_isOnline) {
+                return new Promise((resolve, reject) => {
+                    _offlineQueue.push({ prompt, resolve, reject });
+                    showToast("You're offline — request queued");
+                });
+            }
+            const MAX_RETRIES = 3;
+            for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+                if (attempt > 0) {
+                    showToast(`Retrying... (${attempt + 1}/3)`);
+                    await new Promise(r => setTimeout(r, 1000 * attempt));
+                }
+                try {
+                    const res = await fetch(window._WORKER_OVERRIDE || WORKER_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                    });
+                    if (!res.ok) {
+                        const errData = await res.json().catch(() => ({}));
+                        throw new Error(errData.error || `HTTP ${res.status}`);
+                    }
+                    const data = await res.json();
+                    if (!data.candidates?.[0]?.content?.parts?.[0]) throw new Error("Invalid response");
+                    const result = data.candidates[0].content.parts[0].text.trim();
+                    _lastSuccessfulResponse = result;
+                    return result;
+                } catch(e) {
+                    console.warn(`Gemini attempt ${attempt + 1} failed:`, e.message);
+                }
+            }
+            if (_lastSuccessfulResponse) return _lastSuccessfulResponse;
+            return _fallbackQuestions[(_fallbackQIdx++) % _fallbackQuestions.length];
+        }
+
+        // ============================================
+        // GLOBAL STATE
+        // ============================================
+        let currentEmail = "";
+        let currentFullName = "";
+        let currentStep = 1;
+        let userData = { email: "", fullName: "", age: null, sex: null, country: null, conditions: [], currentInput: "", conversationHistory: [], reportHistory: [] };
+        let liveReport = { summary: "", solutions: [], medications: [], timeline: [], riskScores: { cardiovascular: 35, metabolic: 28, respiratory: 42, mental: 19 }, bodySystems: ["respiratory"] };
+        let voiceListening = false;
+        let recognition = null;
+        let _lastGeminiCall = 0;
+        const GEMINI_COOLDOWN_MS = 3000;
+        let _cachedFinalReport = null;
+        let _cachedSolutions = ["Describe your symptoms above to get AI-powered recommendations..."];
+        let _solutionFetchStep = -1;
+
+        // ============================================
+        // INIT
+        // ============================================
+        function initTailwind() { document.documentElement.style.setProperty('--accent', '#14b8a6'); }
+
+        function initGoogleTranslate() {
+            const primaryLang = navigator.language || 'en';
+            const allLangs = navigator.languages || [primaryLang];
+            const isEnglish = allLangs.some(l => l.startsWith('en'));
+            if (isEnglish) return;
+            const targetLang = allLangs.find(l => !l.startsWith('en')) || primaryLang.split('-')[0];
+            document.documentElement.lang = targetLang;
+            const script = document.createElement('script');
+            script.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+            document.head.appendChild(script);
+            window.googleTranslateElementInit = function() {
+                new google.translate.TranslateElement({ pageLanguage: 'en', autoDisplay: false, includedLanguages: targetLang }, 'google_translate_element');
+                const forceTranslate = () => { const select = document.querySelector('.goog-te-combo'); if (select) { select.value = targetLang; select.dispatchEvent(new Event('change')); } };
+                setTimeout(forceTranslate, 800); setTimeout(forceTranslate, 1800);
+            };
+            const style = document.createElement('style');
+            style.innerHTML = '.goog-te-banner-frame,.goog-te-gadget,.goog-te-combo{display:none!important}body{top:0!important}';
+            document.head.appendChild(style);
+        }
+
+        function speakReport() {
+            const text = document.getElementById('live-report-preview').innerText;
+            if ('speechSynthesis' in window && text) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = navigator.language || 'en-US';
+                utterance.rate = 0.95;
+                window.speechSynthesis.speak(utterance);
+            } else {
+                showToast("Text-to-speech not supported in this browser");
+            }
+        }
+
+        function initVoice() {
+            const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognitionAPI) {
+                // Don't disable toggle — just show toast if they try
+                return;
+            }
+            recognition = new SpeechRecognitionAPI();
+            recognition.continuous = true;
+            recognition.interimResults = false;
+            recognition.lang = navigator.language || 'en-US';
+            recognition.onresult = function(event) {
+                let transcript = '';
+                for (let i = event.resultIndex; i < event.results.length; ++i) transcript += event.results[i][0].transcript;
+                const textarea = document.getElementById('user-input');
+                if (textarea && voiceListening) textarea.value = transcript;
+            };
+            recognition.onerror = function(event) {
+                const t = document.getElementById('voice-toggle');
+                if (t) t.checked = false;
+                voiceListening = false;
+                if (event.error === 'no-speech') showToast("No speech detected.");
+                else if (event.error === 'audio-capture') showToast("Microphone not available.");
+            };
+
+        }
+
+        function toggleVoiceListening() {
+            const toggle = document.getElementById('voice-toggle');
+            if (!recognition) {
+                toggle.checked = false;
+                showToast("Voice input not supported in this browser");
+                return;
+            }
+            voiceListening = toggle.checked;
+            if (voiceListening) { try { recognition.start(); showToast("Voice listening active"); } catch(e) {} }
+            else recognition.stop();
+        }
+
+        function registerPWA() {
+            if (!('serviceWorker' in navigator)) return;
+            if (location.protocol === 'file:') return;
+            const swCode = `const CACHE='myai-health-v1';self.addEventListener('install',e=>self.skipWaiting());self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(fetch(e.request).then(r=>{const copy=r.clone();caches.open(CACHE).then(c=>c.put(e.request,copy)).catch(()=>{});return r}).catch(()=>caches.match(e.request)))});`;
+            try { const blob = new Blob([swCode], { type: 'text/javascript' }); const url = URL.createObjectURL(blob); navigator.serviceWorker.register(url).catch(() => {}); } catch(e) {}
+        }
+
+        function initializeApp() {
+            initTailwind(); initGoogleTranslate(); initVoice(); registerPWA();
+            const heartBtn = document.getElementById('donation-heart-btn');
+            if (heartBtn) { heartBtn.addEventListener('click', function(e) { e.preventDefault(); e.stopPropagation(); showDonationModal(); }, { passive: false }); heartBtn.onclick = showDonationModal; }
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && document.getElementById('input-page') && !document.getElementById('input-page').classList.contains('hidden') && document.activeElement.id === 'user-input') nextStep();
+                if (e.key === 'Escape') { const dm = document.getElementById('donation-modal'); if (dm && dm.classList.contains('is-open')) hideDonationModal(); document.querySelectorAll('.fixed.bg-black\\/60,.fixed.bg-black\\/70').forEach(el => { if (el.id !== 'donation-modal') el.remove(); }); }
+            });
+            const consentBox = document.getElementById('consent-checkbox');
+            const startBtn = document.getElementById('start-button');
+            if (consentBox && startBtn) consentBox.addEventListener('change', () => { startBtn.disabled = !consentBox.checked; });
+
+            // AUTO-SAVE: only when on input-page
+            let saveTimer = null;
+            ['input','change','click'].forEach(evt => {
+                document.addEventListener(evt, () => {
+                    clearTimeout(saveTimer);
+                    saveTimer = setTimeout(() => {
+                        const ip = document.getElementById('input-page');
+                        if (ip && !ip.classList.contains('hidden')) {
+                            try { localStorage.setItem('myai_health_session', JSON.stringify({ userData, liveReport, currentStep, currentEmail, currentFullName })); } catch(e) {}
+                        }
+                    }, 1500);
+                }, { passive: true });
+            });
+
+            // FIX 1: Restore banner — only show if real session data exists
+            const saved = localStorage.getItem('myai_health_session');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    if (
+                        parsed &&
+                        parsed.userData &&
+                        parsed.userData.conversationHistory &&
+                        parsed.userData.conversationHistory.length > 0
+                    ) {
+                        showRestorePrompt(parsed);
+                    } else {
+                        // Stale/empty session — clean it up silently
+                        localStorage.removeItem('myai_health_session');
+                    }
+                } catch(e) {
+                    localStorage.removeItem('myai_health_session');
+                }
+            }
+
+            console.log('%c[MyAI Health] Fully initialized', 'color:#14b8a6');
+        }
+
+        // ============================================
+        // AI: QUESTIONING — empathetic, context-aware, no repeats
+        // ============================================
+        const _empathyPhrases = [
+            "I understand,", "Got it,", "Thank you for sharing that,", "I hear you,",
+            "That makes sense,", "Noted,", "I appreciate you telling me that,",
+            "Okay, I understand,", "Thanks for clarifying,"
+        ];
+        let _empathyIdx = 0;
+
+        async function getNextQuestionFromAI(userInput) {
+            const history = userData.conversationHistory.filter(h => h.ai && h.user);
+            const askedQuestions = history.map(h => h.ai).filter(Boolean);
+            const allUserInputs = history.map(h => h.user).filter(Boolean);
+            const turnCount = history.length;
+            const knownFacts = allUserInputs.join(' | ');
+            const empathy = _empathyPhrases[_empathyIdx % _empathyPhrases.length];
+            _empathyIdx++;
+
+            const prompt = `You are a warm, experienced family doctor who has been actively listening to this patient for several minutes. You genuinely care about them.
+
+WHAT THE PATIENT HAS ALREADY TOLD YOU:
+"${knownFacts}"
+
+THEIR LATEST MESSAGE:
+"${userInput}"
+
+QUESTIONS ALREADY ASKED — DO NOT REPEAT OR REPHRASE ANY:
+${askedQuestions.length ? askedQuestions.map((q, i) => `${i + 1}. ${q}`).join('\n') : 'None yet'}
+
+TURNS COMPLETED: ${turnCount}
+
+YOUR TASK:
+Write ONE response that has two parts:
+1. A micro-acknowledgment (1 sentence) that references at least one specific detail from their latest message — not generic, not templated. Show you actually heard them.
+2. One focused follow-up question that fills the most important information gap.
+
+TONE RULES:
+- If they sound scared or anxious → be extra gentle and reassuring
+- If they sound frustrated or exhausted → validate that first
+- If they're matter-of-fact → calm, professional warmth
+- Write like a caring human, not a form. Use contractions naturally.
+- Never start with the same opening word as the previous response: "${askedQuestions.slice(-1)[0] || ''}"
+
+STRICT RULES:
+- Reference a specific word or detail from their last message in your acknowledgment
+- Never repeat or rephrase a previous question
+- Never ask about something already mentioned
+- Keep total response under 40 words
+- After 7+ turns with enough info for diagnosis + pharmacy card, reply ONLY: REPORT_READY
+- Output only your response — no labels, no preamble`;
+
+            const text = await safeGeminiCall(prompt);
+            if (/^REPORT_READY[.!]?$/i.test(text.trim()) || text.toLowerCase().includes('report_ready')) {
+                showReportReadyBanner();
+                return "I now have enough information to generate your full report. You can add more details or click <strong>Download PDF Report</strong> when ready.";
+            }
+            return text;
+        }
+
+        // ============================================
+        // AI: FINAL REPORT
+        // ============================================
+        async function generateFinalReportWithAI() {
+            const history = userData.conversationHistory;
+            const patientName = currentFullName || "Patient";
+
+            const prompt = `You are a goal-driven medical AI. Based strictly on what the patient has said — do NOT assume or invent anything not mentioned — generate a structured medical intake report.
+
+Patient name: ${patientName}
+Conversation (use ONLY this as your source):
+${history.map(h => `Patient: ${h.user}`).join('\n')}
+
+Generate the report in EXACTLY this format:
+
+---
+PATIENT SUMMARY
+Name: ${patientName}
+Date: ${new Date().toLocaleDateString()}
+[2-3 sentences summarizing only what was stated — no assumptions]
+
+---
+KEY SYMPTOMS & TIMELINE
+[Bullet list — only what patient explicitly described]
+
+---
+FINAL SOLUTION
+[Concrete, specific actionable recommendation. What to do, in what order, starting today. No vague advice.]
+
+---
+PHARMACY CARD
+This section is a general pharmacist discussion guide only — not a prescription.
+Print or show this to your pharmacist. They will confirm suitability for your specific case.
+
+Based on the described symptoms, the following medication CATEGORIES may be relevant:
+
+Option 1 — [Drug category / common name e.g. "Antihistamine (e.g. Cetirizine)"]
+• Typical form: [tablet / syrup / cream / nasal spray / etc]
+• General use pattern: [e.g. "Usually taken once daily — pharmacist will confirm dose for your age/weight"]
+• Availability: Commonly OTC / Usually prescription — verify locally
+• Ask your pharmacist about: [one specific question to ask]
+
+Option 2 — [Drug category] (if applicable)
+• Typical form: ...
+• General use pattern: ...
+• Availability: ...
+• Ask your pharmacist about: ...
+
+⚠ If symptoms suggest prescription is needed: [One sentence on what type of specialist to consult and why]
+
+---
+RISK ASSESSMENT
+• Cardiovascular: X/100
+• Metabolic: X/100
+• Respiratory: X/100
+• Mental health: X/100
+
+---
+URGENCY LEVEL
+[Low / Medium / High] — [one sentence reason]
+
+---
+DISCLAIMER
+This report is AI-generated for informational purposes only. It is not medical advice, diagnosis, or prescription. Always consult a qualified healthcare professional. The pharmacist or physician bears full responsibility for any treatment decision.
+
+At the very end append this JSON on its own line (no label): {"cv":X,"met":X,"resp":X,"ment":X}`;
+
+            const fullText = await safeGeminiCall(prompt);
+            const jsonMatch = fullText.match(/\{"cv":\s*\d+[^}]*\}/);
+            if (jsonMatch) {
+                try {
+                    const scores = JSON.parse(jsonMatch[0]);
+                    liveReport.riskScores.cardiovascular = scores.cv || liveReport.riskScores.cardiovascular;
+                    liveReport.riskScores.metabolic = scores.met || liveReport.riskScores.metabolic;
+                    liveReport.riskScores.respiratory = scores.resp || liveReport.riskScores.respiratory;
+                    liveReport.riskScores.mental = scores.ment || liveReport.riskScores.mental;
+                } catch(e) {}
+            }
+            return fullText.replace(/\{"cv":\s*\d+[^}]*\}/, '').trim();
+        }
+
+        // ============================================
+        // AI: LIVE SOLUTIONS
+        // ============================================
+        async function fetchAISolutions() {
+            if (!userData.currentInput || userData.conversationHistory.length === 0) return;
+            if (_solutionFetchStep === currentStep) return;
+            _solutionFetchStep = currentStep;
+            const history = userData.conversationHistory;
+            const prompt = `You are a medical AI assistant. Based on this health conversation, give exactly 4 brief, actionable recommendations (each under 12 words). Return ONLY a JSON array of strings, no markdown, no explanation.
+Conversation: ${history.map(h => `Patient: ${h.user}`).join(' | ')}`;
+            try {
+                const raw = await safeGeminiCall(prompt);
+                const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
+                if (Array.isArray(parsed) && parsed.length > 0) { _cachedSolutions = parsed; updateLiveReport(); }
+            } catch(e) {}
+        }
+
+        // ============================================
+        // CACHE FINAL REPORT
+        // ============================================
+        async function getFinalReport() {
+            if (_cachedFinalReport) return _cachedFinalReport;
+            _cachedFinalReport = await generateFinalReportWithAI();
+            return _cachedFinalReport;
+        }
+
+        // ============================================
+        // NAVIGATION
+        // ============================================
+        async function nextStep() {
+            const inputField = document.getElementById('user-input');
+            const input = inputField.value.trim();
+            if (!input) return;
+            const now = Date.now();
+            if (now - _lastGeminiCall < GEMINI_COOLDOWN_MS) { showToast("Please wait a moment before continuing..."); return; }
+            const nextBtn = document.querySelector('button[onclick="nextStep()"]');
+            const questionEl = document.getElementById('current-question');
+            if (nextBtn) nextBtn.disabled = true;
+            userData.currentInput = input;
+            userData.conversationHistory.push({ user: input, ai: "" });
+            updateLiveReport();
+            questionEl.innerHTML = '<span class="typing-dot">●</span><span class="typing-dot">●</span><span class="typing-dot">●</span>';
+            try {
+                _lastGeminiCall = Date.now();
+                const nextQuestion = await getNextQuestionFromAI(input);
+                userData.conversationHistory[userData.conversationHistory.length - 1].ai = nextQuestion;
+                currentStep++;
+                document.getElementById('current-step').innerText = String(currentStep).padStart(2, '0');
+                questionEl.innerHTML = nextQuestion;
+                inputField.value = '';
+                inputField.focus();
+                if (currentStep % 3 === 0) fetchAISolutions();
+                checkForRedFlags();
+            } catch(e) {
+                userData.conversationHistory.pop();
+                questionEl.innerHTML = '<span style="color:#ef4444;">⚠ Connection issue — please check your internet and try again.</span>';
+                const retryBtn = document.createElement('button');
+                retryBtn.textContent = '↩ Retry';
+                retryBtn.style.cssText = 'display:block;margin-top:12px;padding:8px 18px;background:#0f766e;color:white;border:none;border-radius:12px;cursor:pointer;font-size:14px;';
+                retryBtn.addEventListener('click', () => { inputField.value = input; nextStep(); }, { once: true });
+                questionEl.appendChild(retryBtn);
+            } finally {
+                if (nextBtn) nextBtn.disabled = false;
+            }
+        }
+
+        function prevStep() {
+            if (currentStep <= 1) { showToast("Already at the first step"); return; }
+            currentStep--;
+            document.getElementById('current-step').innerText = String(currentStep).padStart(2, '0');
+            const previousTurn = userData.conversationHistory[currentStep - 1];
+            const questionEl = document.getElementById('current-question');
+            if (previousTurn && previousTurn.ai) questionEl.innerHTML = previousTurn.ai;
+            else questionEl.innerHTML = "What is your main health concern right now?";
+            document.getElementById('user-input').focus();
+            showToast("Went back to previous step");
+        }
+
+        function addToCurrentStep() {
+            const input = document.getElementById('user-input').value.trim();
+            if (!input) return;
+            userData.currentInput = input;
+            if (userData.conversationHistory.length > 0) {
+                const last = userData.conversationHistory[userData.conversationHistory.length - 1];
+                last.user = last.user ? last.user + ' ' + input : input;
+            } else userData.conversationHistory.push({ user: input, ai: "" });
+            updateLiveReport();
+            fetchAISolutions();
+            document.getElementById('user-input').value = '';
+            showToast("Added to current step");
+        }
+
+        // ============================================
+        // CONDITION THREADS
+        // ============================================
+        function addNewConditionThread() {
+            const input = document.createElement('input');
+            input.type = 'text'; input.placeholder = 'Enter new condition or symptom...';
+            input.className = 'px-3 py-1.5 text-sm border border-slate-300 rounded-2xl w-64 focus:outline-none focus:border-teal-600';
+            const btn = document.createElement('button'); btn.innerHTML = 'Add'; btn.className = 'ml-2 px-4 py-1.5 bg-teal-700 text-white text-sm rounded-2xl';
+            const wrapper = document.createElement('div'); wrapper.className = 'flex items-center mt-2';
+            wrapper.appendChild(input); wrapper.appendChild(btn);
+            document.getElementById('condition-threads').appendChild(wrapper);
+            btn.onclick = () => { const val = input.value.trim(); if (val) { userData.conditions.push(val); renderConditionThreads(); updateLiveReport(); } wrapper.remove(); };
+            input.focus();
+        }
+
+        function renderConditionThreads() {
+            const container = document.getElementById('condition-threads'); container.innerHTML = '';
+            userData.conditions.forEach((cond, index) => {
+                const tag = document.createElement('div'); tag.className = 'pl-3 pr-1.5 py-1.5 bg-teal-100 text-teal-900 text-xs font-medium rounded-2xl flex items-center gap-x-1.5';
+                const span = document.createElement('span'); span.textContent = cond;
+                const btn = document.createElement('button'); btn.type = 'button'; btn.setAttribute('aria-label', `Remove ${cond}`);
+                btn.className = 'w-6 h-6 flex items-center justify-center text-teal-700 hover:text-white hover:bg-red-500 rounded-full transition-all text-base leading-none';
+                btn.textContent = '×'; btn.onclick = () => removeCondition(index);
+                tag.appendChild(span); tag.appendChild(btn); container.appendChild(tag);
+            });
+        }
+
+        function removeCondition(index) { userData.conditions.splice(index, 1); renderConditionThreads(); updateLiveReport(); }
+
+        // ============================================
+        // LIVE REPORT
+        // ============================================
+        function escapeHtml(str) {
+            if (str == null) return '';
+            return String(str).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+        }
+
+        function updateLiveReport() {
+            const preview = document.getElementById('live-report-preview');
+            let html = `<div style="background:linear-gradient(145deg,#f8fafc,#ffffff);border-radius:20px;padding:24px;box-shadow:0 10px 15px -3px rgb(15 118 110/0.1);">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+                    <div style="width:42px;height:42px;background:linear-gradient(135deg,#0f766e,#14b8a6);border-radius:9999px;display:flex;align-items:center;justify-content:center;"><i class="fa-solid fa-brain" style="color:white;font-size:20px;"></i></div>
+                    <div><div style="font-weight:700;font-size:21px;color:#0f766e;">Live AI Analysis</div><div style="font-size:12px;color:#64748b;">Updating in real time • ${new Date().toLocaleTimeString()}</div></div>
+                </div>
+                <div style="background:white;border:1px solid #e2e8f0;border-radius:16px;padding:18px;margin-bottom:18px;">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><i class="fa-solid fa-comment-medical" style="color:#14b8a6;"></i><span style="font-weight:600;color:#0f766e;font-size:15px;">Your Summary</span></div>
+                    <div style="color:#334155;line-height:1.5;font-size:14.5px;">${userData.currentInput ? escapeHtml(userData.currentInput) : "Start describing your symptoms and health concerns..."}</div>
+                </div>
+                ${userData.conditions.length > 0 ? `<div style="margin-bottom:18px;"><div style="font-weight:600;color:#0f766e;font-size:14px;margin-bottom:6px;">Tracked Conditions</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${userData.conditions.map(c=>`<span style="background:#ccfbf1;color:#0f766e;padding:4px 12px;border-radius:9999px;font-size:12.5px;font-weight:500;">${escapeHtml(c)}</span>`).join('')}</div></div>` : ''}
+                <div style="background:#f0fdfa;border-radius:16px;padding:18px;margin-bottom:18px;">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;"><i class="fa-solid fa-lightbulb" style="color:#14b8a6;"></i><span style="font-weight:700;color:#0f766e;">AI Recommendations</span></div>
+                    <ul style="margin:0;padding-left:20px;color:#334155;font-size:14px;line-height:1.65;">${_cachedSolutions.map(s=>`<li style="margin-bottom:6px;">${escapeHtml(s)}</li>`).join('')}</ul>
+                </div>
+                <div style="margin-top:18px;text-align:center;font-size:12px;color:#475569;">Step <span style="font-weight:600;color:#0f766e;">${currentStep}</span> • AI-powered analysis</div>
+            </div>`;
+            preview.innerHTML = html;
+            liveReport.summary = userData.currentInput || "No details yet";
+        }
+
+        // ============================================
+        // RED FLAGS
+        // ============================================
+        function checkForRedFlags() {
+            const input = userData.currentInput.toLowerCase();
+            const redFlags = ["chest pain","chest tightness","shortness of breath","can't breathe","cannot breathe","left arm","jaw pain","crushing pain","sudden severe headache","worst headache","suicidal","want to die","kill myself","end my life","overdose","coughing blood","vomiting blood","loss of consciousness","passed out","stroke","paralysis","face drooping","slurred speech","severe bleeding","allergic reaction","can't swallow","throat closing"];
+            if (redFlags.some(flag => input.includes(flag))) showUrgencyBanner();
+        }
+
+        function showUrgencyBanner() {
+            if (document.getElementById('urgency-banner')) return;
+            const banner = document.createElement('div');
+            banner.id = 'urgency-banner';
+            banner.className = 'urgency-banner fixed inset-x-0 top-0 bg-red-600 text-white py-4 z-[200] text-center font-semibold shadow-xl';
+            banner.setAttribute('role', 'alert'); banner.setAttribute('aria-live', 'assertive');
+            banner.innerHTML = `<div class="max-w-screen-xl mx-auto px-6 flex items-center justify-center gap-x-3"><i class="fa-solid fa-exclamation-triangle text-2xl"></i><div><span class="font-bold">⚠ Some symptoms you described may need urgent attention.</span><br><span class="text-white text-sm font-medium">If you feel this is serious, call your local emergency number now.</span></div><button onclick="document.getElementById('urgency-banner').remove()" class="ml-4 text-white/70 hover:text-white text-xl font-bold">×</button></div>`;
+            document.body.appendChild(banner);
+            setTimeout(() => { const b = document.getElementById('urgency-banner'); if (b) b.remove(); }, 10000);
+        }
+
+        // ============================================
+        // REPORT READY BANNER
+        // ============================================
+        function showReportReadyBanner() {
+            if (document.getElementById('report-ready-banner')) return;
+            const banner = document.createElement('div');
+            banner.id = 'report-ready-banner';
+            banner.className = 'fixed top-0 inset-x-0 z-[180] bg-teal-700 text-white py-3 px-6 flex items-center justify-between shadow-lg';
+            banner.innerHTML = `<div class="flex items-center gap-3"><i class="fa-solid fa-circle-check text-xl"></i><span class="font-semibold text-sm">Enough info collected — your report is ready to generate.</span></div><button id="report-ready-btn" class="px-4 py-2 bg-white text-teal-700 rounded-xl text-sm font-bold hover:bg-teal-50 shrink-0">Download PDF →</button>`;
+            document.body.prepend(banner);
+            document.getElementById('report-ready-btn').addEventListener('click', () => { banner.remove(); sendReport(); });
+        }
+
+        // ============================================
+        // START ANALYSIS
+        // ============================================
+        async function startAnalysis() {
+            const consent = document.getElementById('consent-checkbox');
+            if (!consent || !consent.checked) { alert("Please check the consent box to continue."); return; }
+            const concern = document.getElementById('concern-input').value.trim();
+            if (!concern) { alert("Please describe your health concern to get started."); return; }
+            currentFullName = document.getElementById('fullname-input').value.trim();
+            userData.fullName = currentFullName;
+            userData.currentInput = concern;
+            // Pre-load first user input so AI has context immediately
+            userData.conversationHistory.push({ user: concern, ai: "" });
+            document.getElementById('landing-page').classList.add('hidden');
+            document.getElementById('input-page').classList.remove('hidden');
+            const questionEl = document.getElementById('current-question');
+            questionEl.innerHTML = '<span class="typing-dot">●</span><span class="typing-dot">●</span><span class="typing-dot">●</span>';
+            updateLiveReport();
+            try {
+                const firstQuestion = await getNextQuestionFromAI(concern);
+                userData.conversationHistory[0].ai = firstQuestion;
+                questionEl.innerHTML = firstQuestion;
+            } catch(e) {
+                questionEl.innerHTML = "How long have you been experiencing this?";
+            }
+            document.getElementById('user-input').focus();
+        }
+
+        // ============================================
+        // SEND REPORT / PDF
+        // ============================================
+        function sendReport() {
+            if (userData.conversationHistory.length === 0) { showToast("Complete at least one question first"); return; }
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black/70 z-[200] flex items-center justify-center';
+            modal.innerHTML = `<div class="bg-white max-w-md mx-4 rounded-3xl p-8 text-center"><div class="text-6xl mb-4">📄</div><div class="font-semibold text-2xl mb-4">Download Your PDF Report</div><div class="text-sm text-slate-600 mb-6 leading-relaxed">Your AI-generated medical analysis will be saved as a PDF to your device.<br><br><strong>All local data will be permanently deleted</strong> after download.</div><div class="flex gap-3"><button onclick="this.closest('.fixed').remove()" class="flex-1 py-3 border border-slate-300 rounded-2xl font-medium">Cancel</button><button onclick="confirmAndDownloadPDF(this)" class="flex-1 py-3 bg-teal-700 hover:bg-teal-800 text-white rounded-2xl font-semibold">Download PDF</button></div></div>`;
+            document.body.appendChild(modal);
+        }
+
+        async function confirmAndDownloadPDF(element) {
+            const modal = element.closest('.fixed');
+            const btn = element;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating...';
+            try {
+                await exportReportAsPDF();
+                modal.remove();
+                purgeAllData();
+                showSuccessPage();
+            } catch(e) {
+                modal.remove();
+                showFallbackDownload();
+            }
+        }
+
+        async function exportReportAsPDF() {
+            const reportText = await getFinalReport();
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const pageW = doc.internal.pageSize.getWidth();
+            const pageH = doc.internal.pageSize.getHeight();
+            const margin = 16;
+            const contentW = pageW - margin * 2;
+            const maxTextW = contentW - 8; // safe inner width
+            let y = 20;
+            const addPage = () => { doc.addPage(); y = 20; };
+            const checkY = (needed = 10) => { if (y + needed > pageH - 20) addPage(); };
+
+            // Header
+            doc.setFillColor(15, 118, 110);
+            doc.rect(0, 0, pageW, 14, 'F');
+            doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(255, 255, 255);
+            doc.text("MY AI MEDICAL ANALYSIS REPORT", margin, 9);
+            doc.setTextColor(0, 0, 0); y = 22;
+
+            // Patient line
+            doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(100, 116, 139);
+            const patientLine = `${currentFullName ? currentFullName + ' · ' : ''}${new Date().toLocaleDateString()}`;
+            doc.text(patientLine, margin, y); y += 10;
+
+            // Parse and render sections
+            const sections = reportText.split(/\n---\n/);
+            sections.forEach(section => {
+                const lines = section.trim().split('\n');
+                const heading = lines[0].trim();
+                const body = lines.slice(1).join('\n').trim();
+                if (!heading || !body) return;
+
+                const isPharmacy = /pharmacy|medication|drug|rx/i.test(heading);
+                checkY(16);
+
+                if (isPharmacy) {
+                    // Pre-calculate box height
+                    doc.setFontSize(8.5);
+                    const boxLines = doc.splitTextToSize(body, maxTextW - 6);
+                    const lineH = 5.5;
+                    const boxH = boxLines.length * lineH + 20;
+                    checkY(boxH);
+
+                    doc.setDrawColor(15, 118, 110); doc.setLineWidth(0.5);
+                    doc.rect(margin, y, contentW, boxH);
+                    doc.setFillColor(240, 253, 250);
+                    doc.rect(margin, y, contentW, 9, 'F');
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(15, 118, 110);
+                    doc.text("PHARMACY CARD", margin + 4, y + 6); y += 11;
+                    doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(51, 65, 85);
+                    boxLines.forEach(line => {
+                        checkY(lineH + 2);
+                        doc.text(line, margin + 4, y);
+                        y += lineH;
+                    });
+                    y += 7;
+                } else {
+                    // Section heading
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(15, 118, 110);
+                    doc.text(heading, margin, y); y += 2;
+                    doc.setDrawColor(20, 184, 166); doc.setLineWidth(0.3);
+                    doc.line(margin, y, margin + contentW, y); y += 5;
+
+                    // Body text
+                    doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.setTextColor(30, 41, 59);
+                    const bodyLines = doc.splitTextToSize(body, maxTextW);
+                    bodyLines.forEach(line => {
+                        checkY(6);
+                        doc.text(line, margin, y);
+                        y += 6;
+                    });
+                    y += 5;
+                }
+            });
+
+            // Footer on every page
+            const totalPages = doc.internal.getNumberOfPages();
+            const toolUrl = 'https://dagrang-repository.github.io/free-ai-medical-tool/';
+            const qrUrl = 'https://i.postimg.cc/8CGvQSLH/qr-code.png';
+
+            // Pre-load QR image
+            let qrDataUrl = null;
+            try {
+                const qrImg = await new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width; canvas.height = img.height;
+                        canvas.getContext('2d').drawImage(img, 0, 0);
+                        resolve(canvas.toDataURL('image/png'));
+                    };
+                    img.onerror = reject;
+                    img.src = qrUrl;
+                });
+                qrDataUrl = qrImg;
+            } catch(e) { console.warn('QR load failed', e); }
+
+            for (let i = 1; i <= totalPages; i++) {
+                doc.setPage(i);
+                doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(148, 163, 184);
+                doc.text(`Page ${i} of ${totalPages} · AI-generated report · Not medical advice`, margin, pageH - 10);
+                doc.setTextColor(20, 184, 166);
+                doc.text(`Free tool: ${toolUrl}`, margin, pageH - 5);
+                // QR code centered bottom
+                if (qrDataUrl) {
+                    const qrSize = 18;
+                    const qrX = (pageW - qrSize) / 2;
+                    const qrY = pageH - qrSize - 4;
+                    doc.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
+                }
+            }
+            doc.save(`AI_Medical_Report_${currentFullName ? currentFullName.replace(/\s+/g,'_') + '_' : ''}${new Date().toISOString().split('T')[0]}.pdf`);
+        }
+
+        // ============================================
+        // SECOND OPINION & WHAT IF
+        // ============================================
+        async function showSecondOpinion() {
+            const preview = document.getElementById('live-report-preview');
+            preview.style.transition = 'all 0.3s'; preview.style.opacity = '0.3';
+            if (userData.conversationHistory.length === 0) { preview.style.opacity = '1'; showToast("Add some health information first"); return; }
+            const prompt = `You are a second medical AI reviewer. Based on this patient conversation, give an ALTERNATIVE risk assessment with slightly different clinical weighting. Return ONLY a JSON object with no markdown: {"cardiovascular":X,"metabolic":X,"respiratory":X,"mental":X} where each is 1-100.
+Conversation: ${userData.conversationHistory.map(h => `Patient: ${h.user}`).join(' | ')}`;
+            try {
+                const raw = await safeGeminiCall(prompt);
+                const scores = JSON.parse(raw.replace(/```json|```/g,'').trim());
+                liveReport.riskScores.cardiovascular = scores.cardiovascular || liveReport.riskScores.cardiovascular;
+                liveReport.riskScores.metabolic = scores.metabolic || liveReport.riskScores.metabolic;
+                liveReport.riskScores.respiratory = scores.respiratory || liveReport.riskScores.respiratory;
+                liveReport.riskScores.mental = scores.mental || liveReport.riskScores.mental;
+            } catch(e) {}
+            updateLiveReport(); preview.style.opacity = '1';
+            showToast("Second opinion generated by AI");
+        }
+
+        function showWhatIfModal() {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black/60 z-[200] flex items-center justify-center';
+            modal.innerHTML = `<div class="bg-white max-w-md mx-4 rounded-3xl p-8"><div class="font-semibold text-xl mb-4">What if...?</div><div class="space-y-2 text-sm"><div onclick="applyWhatIf('peak flow')" class="p-3 hover:bg-slate-50 rounded-2xl cursor-pointer border">I started using a daily peak flow meter</div><div onclick="applyWhatIf('antihistamine')" class="p-3 hover:bg-slate-50 rounded-2xl cursor-pointer border">I added a daily antihistamine</div><div onclick="applyWhatIf('exercise')" class="p-3 hover:bg-slate-50 rounded-2xl cursor-pointer border">I began exercising 3x per week</div></div><div class="mt-6 text-right"><button onclick="this.closest('.fixed').remove()" class="px-5 py-2 text-sm">Close</button></div></div>`;
+            document.body.appendChild(modal);
+        }
+
+        function applyWhatIf(scenario) {
+            const preview = document.getElementById('live-report-preview');
+            preview.style.transition = 'all 0.3s'; preview.style.opacity = '0.4';
+            setTimeout(() => {
+                if (scenario === 'peak flow') liveReport.riskScores.respiratory = Math.max(15, liveReport.riskScores.respiratory - 18);
+                else if (scenario === 'antihistamine') liveReport.riskScores.metabolic = Math.max(12, liveReport.riskScores.metabolic - 9);
+                else liveReport.riskScores.cardiovascular = Math.max(18, liveReport.riskScores.cardiovascular - 12);
+                updateLiveReport(); preview.style.opacity = '1';
+            }, 380);
+            document.querySelectorAll('.fixed').forEach(el => el.remove());
+        }
+
+        // ============================================
+        // SHARE MODAL
+        // ============================================
+        function showShareModal() {
+            const url = encodeURIComponent(window.location.href);
+            const shortMsg = encodeURIComponent("I found a free AI tool that helps you describe your symptoms and get a proper PDF report to take to your doctor or pharmacist. Private, browser-only, no data stored.");
+            const longMsg = encodeURIComponent("I found a free tool that helps people explain their health problems clearly — and get a proper written report to take to a doctor or pharmacist.\n\nIt works in your browser (nothing is stored). You just type or speak normally, and it creates a PDF with:\n• What you told it\n• Clear next steps\n• Pharmacy suggestions\n\nCompletely free, private, and made to help normal people.\n\n");
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black/70 z-[250] flex items-end sm:items-center justify-center';
+            modal.id = 'share-modal';
+            modal.innerHTML = `<div onclick="event.stopPropagation()" class="bg-white w-full sm:max-w-md sm:mx-4 rounded-t-3xl sm:rounded-3xl p-6 sm:p-8 shadow-2xl"><div class="flex items-center justify-between mb-5"><div><div class="font-semibold text-xl text-slate-900">Share this tool</div><div class="text-sm text-slate-500 mt-0.5">Help someone who needs it</div></div><button onclick="document.getElementById('share-modal').remove()" class="w-9 h-9 flex items-center justify-center text-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full">×</button></div><div class="grid grid-cols-2 gap-3 mb-5"><a href="https://wa.me/?text=${longMsg}${url}" target="_blank" rel="noopener" class="flex items-center gap-2.5 px-4 py-3 bg-green-50 hover:bg-green-100 border border-green-200 rounded-2xl text-green-800 font-medium text-sm transition-all"><i class="fa-brands fa-whatsapp text-xl text-green-600"></i> WhatsApp</a><a href="https://www.facebook.com/sharer/sharer.php?u=${url}" target="_blank" rel="noopener" class="flex items-center gap-2.5 px-4 py-3 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-2xl text-blue-800 font-medium text-sm transition-all"><i class="fa-brands fa-facebook text-xl text-blue-600"></i> Facebook</a><a href="https://www.linkedin.com/sharing/share-offsite/?url=${url}" target="_blank" rel="noopener" class="flex items-center gap-2.5 px-4 py-3 bg-sky-50 hover:bg-sky-100 border border-sky-200 rounded-2xl text-sky-800 font-medium text-sm transition-all"><i class="fa-brands fa-linkedin text-xl text-sky-700"></i> LinkedIn</a><a href="https://twitter.com/intent/tweet?text=${shortMsg}&url=${url}" target="_blank" rel="noopener" class="flex items-center gap-2.5 px-4 py-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl text-slate-800 font-medium text-sm transition-all"><i class="fa-brands fa-x-twitter text-xl"></i> X / Twitter</a><a href="mailto:?subject=Free AI Health Tool&body=${longMsg}${url}" class="flex items-center gap-2.5 px-4 py-3 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-2xl text-rose-800 font-medium text-sm transition-all"><i class="fa-solid fa-envelope text-xl text-rose-500"></i> Email</a><button onclick="navigator.clipboard.writeText(window.location.href).then(()=>showToast('Link copied!'))" class="flex items-center gap-2.5 px-4 py-3 bg-teal-50 hover:bg-teal-100 border border-teal-200 rounded-2xl text-teal-800 font-medium text-sm transition-all"><i class="fa-solid fa-link text-xl text-teal-600"></i> Copy link</button></div><div class="bg-slate-50 border border-slate-200 rounded-2xl p-4"><div class="text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wide">Ready-to-send message</div><p class="text-sm text-slate-700 leading-relaxed" id="share-text-preview">I found a free AI tool that helps you describe your symptoms and get a proper PDF report to take to your doctor or pharmacist. Private, browser-only, no data stored. Try it: ${window.location.href}</p><button onclick="navigator.clipboard.writeText(document.getElementById('share-text-preview').innerText).then(()=>showToast('Message copied!'))" class="mt-3 text-xs text-teal-700 font-semibold hover:underline flex items-center gap-1"><i class="fa-solid fa-copy"></i> Copy full message</button></div></div>`;
+            modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+            document.body.appendChild(modal);
+        }
+
+        // ============================================
+        // DONATION
+        // ============================================
+        function showDonationModal() {
+            const modal = document.getElementById('donation-modal');
+            if (!modal) return;
+            modal.classList.remove('hidden'); modal.classList.add('is-open');
+            document.body.style.overflow = 'hidden';
+            setTimeout(() => { const closeBtn = modal.querySelector('button'); if (closeBtn) closeBtn.focus(); }, 50);
+        }
+        function hideDonationModal() {
+            const modal = document.getElementById('donation-modal');
+            if (!modal) return;
+            modal.classList.remove('is-open'); modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+        function setDonationAmount(amount) { const input = document.getElementById('donation-amount'); if (input) input.value = amount; }
+        function donateCustom() {
+            const amountInput = document.getElementById('donation-amount');
+            const amount = amountInput ? parseInt(amountInput.value) || 5 : 5;
+            const finalLink = STRIPE_PAYMENT_LINK + '?prefilled_quantity=' + amount;
+            const win = window.open(finalLink, '_blank', 'noopener,noreferrer');
+            hideDonationModal();
+            if (!win || win.closed || typeof win.closed === 'undefined') window.location.href = finalLink;
+        }
+
+        // ============================================
+        // DATA / SESSION
+        // ============================================
+        function downloadJSON() {
+            const data = { version: "2026.1", email: currentEmail, timestamp: new Date().toISOString(), userData, report: liveReport };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = `myai-health-report-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+        }
+
+        // ============================================
+        // APP VERSION + WORKER OVERRIDE
+        // ============================================
+        const APP_VERSION = "2026.04.28";
+        (function() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('worker')) {
+                // Allow instant failover via ?worker=NEW_URL
+                window._WORKER_OVERRIDE = params.get('worker');
+            }
+        })();
+
+        // ============================================
+        // GLOBAL ERROR BOUNDARY
+        // ============================================
+        window.addEventListener('error', function(e) {
+            console.error('[Global Error]', e.message, e.filename, e.lineno);
+            if (typeof showToast === 'function') showToast("Something went wrong — your data is safe.");
+        });
+        window.addEventListener('unhandledrejection', function(e) {
+            console.error('[Unhandled Promise]', e.reason);
+            if (typeof showToast === 'function') showToast("A background task failed — please try again.");
+            e.preventDefault();
+        });
+
+        function purgeAllData() {
+            try { localStorage.clear(); } catch(e) {}
+            try { sessionStorage.clear(); } catch(e) {}
+            if (window.indexedDB) {
+                try {
+                    indexedDB.databases().then(dbs => {
+                        dbs.forEach(db => { try { indexedDB.deleteDatabase(db.name); } catch(e) {} });
+                    }).catch(() => {});
+                } catch(e) {}
+            }
+            if ('caches' in window) {
+                try { caches.keys().then(keys => { keys.forEach(key => caches.delete(key)); }).catch(() => {}); } catch(e) {}
+            }
+            if ('serviceWorker' in navigator) {
+                try {
+                    navigator.serviceWorker.ready.then(reg => {
+                        if (reg.active) reg.active.postMessage({ type: 'PURGE_CACHE' });
+                    }).catch(() => {});
+                } catch(e) {}
+            }
+            userData = { email: "", fullName: "", age: null, sex: null, country: null, conditions: [], currentInput: "", conversationHistory: [], reportHistory: [] };
+            liveReport = { summary: "", solutions: [], medications: [], timeline: [], riskScores: { cardiovascular: 35, metabolic: 28, respiratory: 42, mental: 19 }, bodySystems: ["respiratory"] };
+            _cachedFinalReport = null;
+            _cachedSolutions = ["Describe your symptoms above to get AI-powered recommendations..."];
+            _solutionFetchStep = -1;
+            _lastSuccessfulResponse = null;
+            _offlineQueue = [];
+            currentFullName = "";
+            currentEmail = "";
+        }
+
+        function nuclearClearData() {
+            if (!confirm("This will permanently delete ALL your session data from this device. Continue?")) return;
+            purgeAllData();
+            showToast("All data cleared permanently.");
+            setTimeout(() => window.location.reload(), 1500);
+        }
+
+        function showSuccessPage() { document.getElementById('input-page').classList.add('hidden'); document.getElementById('success-page').classList.remove('hidden'); createConfetti(); }
+
+        function createConfetti() {
+            const colors = ['#14b8a6','#a855f7','#f59e0b','#ef4444'];
+            const canvas = document.createElement('canvas');
+            canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:999;pointer-events:none;';
+            document.body.appendChild(canvas);
+            const ctx = canvas.getContext('2d'); canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+            const particles = Array.from({length:80}, () => ({ x: Math.random()*canvas.width, y: Math.random()*canvas.height-100, size: Math.random()*8+4, speed: Math.random()*3+2, color: colors[Math.floor(Math.random()*colors.length)], angle: Math.random()*360 }));
+            let frame = 0;
+            const animate = () => { ctx.clearRect(0,0,canvas.width,canvas.height); let alive = false; particles.forEach(p => { p.y+=p.speed; p.angle+=2; p.x+=Math.sin(p.angle*Math.PI/180)*0.5; ctx.save(); ctx.fillStyle=p.color; ctx.translate(p.x,p.y); ctx.rotate(p.angle*Math.PI/180); ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size); ctx.restore(); if(p.y<canvas.height)alive=true; }); frame++; if(alive&&frame<120)requestAnimationFrame(animate); else canvas.remove(); };
+            animate();
+        }
+
+        function showFallbackDownload() {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black/60 z-[200] flex items-center justify-center';
+            modal.innerHTML = `<div class="bg-white max-w-sm mx-4 rounded-3xl p-8 text-center"><div class="text-5xl mb-4">📥</div><div class="font-semibold text-xl mb-3">PDF generation failed</div><div class="text-sm text-slate-600 mb-6">Please try again or check your connection.</div><div class="flex gap-3"><button onclick="this.closest('.fixed').remove()" class="flex-1 py-3 border rounded-2xl">Close</button><button onclick="purgeAllData();this.closest('.fixed').remove();showSuccessPage()" class="flex-1 py-3 bg-red-600 text-white rounded-2xl">Purge data</button></div></div>`;
+            document.body.appendChild(modal);
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-2xl text-sm shadow-xl z-[300]';
+            toast.innerText = message; document.body.appendChild(toast);
+            setTimeout(() => { toast.style.transition='all 0.3s'; toast.style.opacity='0'; setTimeout(()=>toast.remove(),300); }, 2200);
+        }
+
+        function restartApp() { window.location.reload(); }
+
+        // ============================================
+        // RESTORE
+        // ============================================
+        function showRestorePrompt(parsed) {
+            const banner = document.createElement('div');
+            banner.className = 'fixed top-4 left-1/2 -translate-x-1/2 bg-white border border-teal-200 shadow-xl rounded-2xl px-5 py-3 z-[150] flex items-center gap-3 text-sm';
+            banner.innerHTML = `<span class="text-slate-700">Restore previous session?</span><button id="restore-yes" class="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-medium">Restore</button><button id="restore-no" class="px-3 py-1.5 border border-slate-300 hover:bg-slate-50 rounded-xl text-xs font-medium">Dismiss</button>`;
+            document.body.appendChild(banner);
+            document.getElementById('restore-yes').onclick = () => {
+                userData = parsed.userData || userData;
+                liveReport = parsed.report || liveReport;
+                currentEmail = parsed.currentEmail || parsed.email || "";
+                currentFullName = parsed.currentFullName || userData.fullName || "";
+                currentStep = parsed.currentStep || userData.conversationHistory.length || 1;
+                document.getElementById('current-step').innerText = String(currentStep).padStart(2, '0');
+                const lastTurn = userData.conversationHistory.filter(h => h.ai).slice(-1)[0];
+                const questionEl = document.getElementById('current-question');
+                if (lastTurn && lastTurn.ai) questionEl.innerHTML = lastTurn.ai;
+                else questionEl.innerHTML = "What is your main health concern right now?";
+                document.getElementById('landing-page').classList.add('hidden');
+                document.getElementById('input-page').classList.remove('hidden');
+                renderConditionThreads(); updateLiveReport(); banner.remove();
+                showToast(`Session restored — step ${currentStep}`);
+            };
+            document.getElementById('restore-no').onclick = () => {
+                localStorage.removeItem('myai_health_session');
+                banner.remove();
+            };
+            setTimeout(() => { if (banner.parentNode) banner.remove(); }, 12000);
+        }
+
+        function showRestoreModal() {
+            const input = document.createElement('input'); input.type = 'file'; input.accept = '.json';
+            input.onchange = function(e) {
+                const file = e.target.files[0]; if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    try {
+                        const data = JSON.parse(ev.target.result);
+                        userData = data.userData || userData; liveReport = data.report || liveReport;
+                        currentEmail = data.email || ""; currentFullName = data.currentFullName || userData.fullName || "";
+                        document.getElementById('landing-page').classList.add('hidden');
+                        document.getElementById('input-page').classList.remove('hidden');
+                        const lastTurn = userData.conversationHistory.filter(h => h.ai).slice(-1)[0];
+                        if (lastTurn && lastTurn.ai) document.getElementById('current-question').innerHTML = lastTurn.ai;
+                        renderConditionThreads(); updateLiveReport();
+                        showToast("Session restored successfully");
+                    } catch(err) { alert("Invalid report file"); }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        // ============================================
+        // BOOT
+        // ============================================
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initializeApp);
+        else initializeApp();
+
+        window.addEventListener('load', () => {
+            const heartBtn = document.getElementById('donation-heart-btn');
+            if (heartBtn && !heartBtn.dataset.bound) { heartBtn.addEventListener('click', showDonationModal); heartBtn.dataset.bound = '1'; }
+        });
+    </script>
+</body>
+</html>
