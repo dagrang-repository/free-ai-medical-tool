@@ -239,6 +239,10 @@
             </div>
             <div class="mt-8 pt-6 border-t border-slate-200 text-center text-xs text-slate-600 space-y-1">
                 <div>Built with ❤️ by Sang DAGRANG • <a href="https://www.letsmeet-here.app" target="_blank" rel="noopener noreferrer" class="underline hover:text-teal-700 font-medium">letsmeet-here.app</a> • <a href="https://www.securesvault.com" target="_blank" rel="noopener noreferrer" class="underline hover:text-teal-700 font-medium">securesvault.com</a> • 2026</div>
+                <div class="text-slate-400 text-xs" id="app-version-display">v2026.04.28</div>
+                <div class="mt-2">
+                    <button onclick="nuclearClearData()" class="text-xs text-red-400 hover:text-red-600 underline">🗑 Clear all my data now</button>
+                </div>
                 <div class="text-slate-500">This tool is not a medical device under EU MDR, FDA 21 CFR, or any national healthcare regulation.</div>
             </div>
         </div>
@@ -315,7 +319,7 @@
                     await new Promise(r => setTimeout(r, 1000 * attempt));
                 }
                 try {
-                    const res = await fetch(WORKER_URL, {
+                    const res = await fetch(window._WORKER_OVERRIDE || WORKER_URL, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
@@ -1006,14 +1010,67 @@ Conversation: ${userData.conversationHistory.map(h => `Patient: ${h.user}`).join
             document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
         }
 
+        // ============================================
+        // APP VERSION + WORKER OVERRIDE
+        // ============================================
+        const APP_VERSION = "2026.04.28";
+        (function() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('worker')) {
+                // Allow instant failover via ?worker=NEW_URL
+                window._WORKER_OVERRIDE = params.get('worker');
+            }
+        })();
+
+        // ============================================
+        // GLOBAL ERROR BOUNDARY
+        // ============================================
+        window.addEventListener('error', function(e) {
+            console.error('[Global Error]', e.message, e.filename, e.lineno);
+            if (typeof showToast === 'function') showToast("Something went wrong — your data is safe.");
+        });
+        window.addEventListener('unhandledrejection', function(e) {
+            console.error('[Unhandled Promise]', e.reason);
+            if (typeof showToast === 'function') showToast("A background task failed — please try again.");
+            e.preventDefault();
+        });
+
         function purgeAllData() {
-            localStorage.clear(); sessionStorage.clear();
-            if (window.indexedDB) indexedDB.databases().then(dbs => { dbs.forEach(db => indexedDB.deleteDatabase(db.name)); }).catch(() => {});
-            if ('caches' in window) caches.keys().then(keys => { keys.forEach(key => caches.delete(key)); }).catch(() => {});
+            try { localStorage.clear(); } catch(e) {}
+            try { sessionStorage.clear(); } catch(e) {}
+            if (window.indexedDB) {
+                try {
+                    indexedDB.databases().then(dbs => {
+                        dbs.forEach(db => { try { indexedDB.deleteDatabase(db.name); } catch(e) {} });
+                    }).catch(() => {});
+                } catch(e) {}
+            }
+            if ('caches' in window) {
+                try { caches.keys().then(keys => { keys.forEach(key => caches.delete(key)); }).catch(() => {}); } catch(e) {}
+            }
+            if ('serviceWorker' in navigator) {
+                try {
+                    navigator.serviceWorker.ready.then(reg => {
+                        if (reg.active) reg.active.postMessage({ type: 'PURGE_CACHE' });
+                    }).catch(() => {});
+                } catch(e) {}
+            }
             userData = { email: "", fullName: "", age: null, sex: null, country: null, conditions: [], currentInput: "", conversationHistory: [], reportHistory: [] };
             liveReport = { summary: "", solutions: [], medications: [], timeline: [], riskScores: { cardiovascular: 35, metabolic: 28, respiratory: 42, mental: 19 }, bodySystems: ["respiratory"] };
-            _cachedFinalReport = null; _cachedSolutions = ["Describe your symptoms above to get AI-powered recommendations..."]; _solutionFetchStep = -1;
-            currentFullName = ""; currentEmail = "";
+            _cachedFinalReport = null;
+            _cachedSolutions = ["Describe your symptoms above to get AI-powered recommendations..."];
+            _solutionFetchStep = -1;
+            _lastSuccessfulResponse = null;
+            _offlineQueue = [];
+            currentFullName = "";
+            currentEmail = "";
+        }
+
+        function nuclearClearData() {
+            if (!confirm("This will permanently delete ALL your session data from this device. Continue?")) return;
+            purgeAllData();
+            showToast("All data cleared permanently.");
+            setTimeout(() => window.location.reload(), 1500);
         }
 
         function showSuccessPage() { document.getElementById('input-page').classList.add('hidden'); document.getElementById('success-page').classList.remove('hidden'); createConfetti(); }
