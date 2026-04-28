@@ -220,8 +220,8 @@
     </main>
 
     <!-- FLOATING SHARE -->
-    <button id="share-btn" type="button" aria-label="Share this tool" onclick="showShareModal()" style="position:fixed;bottom:max(6px,env(safe-area-inset-bottom,6px));left:max(6px,env(safe-area-inset-left,6px));width:32px;height:32px;border-radius:9999px;background:transparent;border:none;cursor:pointer;z-index:50;padding:0;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;touch-action:manipulation;animation:shareBreathe 4s ease-in-out infinite;overflow:visible;">
-        <span style="font-size:10px;font-weight:800;letter-spacing:0.01em;color:#14b8a6;text-shadow:0 1px 0 #0f766e,0 0 8px rgba(20,184,166,0.9),0 0 18px rgba(20,184,166,0.55);filter:drop-shadow(0 1px 3px rgba(0,0,0,0.3));animation:shareIconPulse 4s ease-in-out infinite;line-height:1;user-select:none;">Share</span>
+    <button id="share-btn" type="button" aria-label="Share this tool" onclick="showShareModal()" style="position:fixed;bottom:max(10px,env(safe-area-inset-bottom,10px));left:max(10px,env(safe-area-inset-left,10px));width:52px;height:28px;border-radius:9999px;background:rgba(15,118,110,0.92);border:1.5px solid rgba(20,184,166,0.7);cursor:pointer;z-index:50;padding:0 10px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;touch-action:manipulation;animation:shareBreathe 3s ease-in-out infinite;overflow:visible;box-shadow:0 0 10px rgba(20,184,166,0.7),0 0 22px rgba(20,184,166,0.4);">
+        <span style="font-size:11px;font-weight:800;letter-spacing:0.04em;color:#ffffff;text-shadow:0 0 8px rgba(255,255,255,0.9);line-height:1;user-select:none;">Share</span>
     </button>
 
     <!-- FLOATING HEART -->
@@ -491,18 +491,25 @@
         }
 
         // ============================================
-        // AI: QUESTIONING — strict context-aware, no repeats
+        // AI: QUESTIONING — empathetic, context-aware, no repeats
         // ============================================
+        const _empathyPhrases = [
+            "I understand,", "Got it,", "Thank you for sharing that,", "I hear you,",
+            "That makes sense,", "Noted,", "I appreciate you telling me that,",
+            "Okay, I understand,", "Thanks for clarifying,"
+        ];
+        let _empathyIdx = 0;
+
         async function getNextQuestionFromAI(userInput) {
             const history = userData.conversationHistory.filter(h => h.ai && h.user);
             const askedQuestions = history.map(h => h.ai).filter(Boolean);
             const allUserInputs = history.map(h => h.user).filter(Boolean);
             const turnCount = history.length;
-
-            // Build a tight context summary of what we already know
             const knownFacts = allUserInputs.join(' | ');
+            const empathy = _empathyPhrases[_empathyIdx % _empathyPhrases.length];
+            _empathyIdx++;
 
-            const prompt = `You are a medical intake AI. Your goal: ask ONE question to gather missing info needed for a concrete diagnosis and pharmacy recommendation.
+            const prompt = `You are a warm, empathetic medical intake assistant. Your goal: gather the most important missing information to produce a concrete diagnosis and pharmacy recommendation.
 
 WHAT THE PATIENT HAS ALREADY TOLD YOU:
 "${knownFacts}"
@@ -510,23 +517,23 @@ WHAT THE PATIENT HAS ALREADY TOLD YOU:
 THEIR LATEST MESSAGE:
 "${userInput}"
 
-QUESTIONS ALREADY ASKED (DO NOT REPEAT OR REPHRASE ANY OF THESE):
+QUESTIONS ALREADY ASKED — DO NOT REPEAT OR REPHRASE ANY:
 ${askedQuestions.length ? askedQuestions.map((q, i) => `${i + 1}. ${q}`).join('\n') : 'None yet'}
 
 TURNS COMPLETED: ${turnCount}
 
 YOUR TASK:
-- Read everything the patient said carefully
-- Identify the single most important GAP in information still needed
-- Ask exactly ONE short, specific follow-up question about that gap
-- The question MUST directly relate to what the patient described — never generic
-- After 6+ turns with sufficient info, reply with only: REPORT_READY
+- Start your response with exactly this empathy phrase: "${empathy}"
+- Then ask exactly ONE short, specific follow-up question directly related to what they just said
+- The question must address the single most important information gap
+- Sound like a caring human listener, not a form
+- After 7+ turns with sufficient info for both diagnosis and pharmacy card, reply ONLY: REPORT_READY
 
 STRICT RULES:
 - Never repeat or rephrase a previous question
-- Never ask about something the patient already mentioned
+- Never ask about something already mentioned
 - Never ask two questions at once
-- Output the question ONLY — no preamble, no explanation`;
+- Output only the empathy phrase + one question — nothing else`;
 
             const text = await safeGeminiCall(prompt);
             if (/^REPORT_READY[.!]?$/i.test(text.trim()) || text.toLowerCase().includes('report_ready')) {
@@ -778,12 +785,14 @@ Conversation: ${history.map(h => `Patient: ${h.user}`).join(' | ')}`;
         }
 
         function showUrgencyBanner() {
+            if (document.getElementById('urgency-banner')) return;
             const banner = document.createElement('div');
+            banner.id = 'urgency-banner';
             banner.className = 'urgency-banner fixed inset-x-0 top-0 bg-red-600 text-white py-4 z-[200] text-center font-semibold shadow-xl';
             banner.setAttribute('role', 'alert'); banner.setAttribute('aria-live', 'assertive');
-            banner.innerHTML = `<div class="max-w-screen-xl mx-auto px-6 flex items-center justify-center gap-x-3"><i class="fa-solid fa-exclamation-triangle text-2xl"></i><div><span class="font-bold">EMERGENCY — Based on what you described, seek emergency care now.</span><br><span class="text-white text-sm font-medium">Call your local emergency number immediately.</span></div></div>`;
+            banner.innerHTML = `<div class="max-w-screen-xl mx-auto px-6 flex items-center justify-center gap-x-3"><i class="fa-solid fa-exclamation-triangle text-2xl"></i><div><span class="font-bold">⚠ Some symptoms you described may need urgent attention.</span><br><span class="text-white text-sm font-medium">If you feel this is serious, call your local emergency number now.</span></div><button onclick="document.getElementById('urgency-banner').remove()" class="ml-4 text-white/70 hover:text-white text-xl font-bold">×</button></div>`;
             document.body.appendChild(banner);
-            setTimeout(() => { if (banner.parentNode) banner.parentNode.removeChild(banner); }, 6500);
+            setTimeout(() => { const b = document.getElementById('urgency-banner'); if (b) b.remove(); }, 10000);
         }
 
         // ============================================
@@ -860,60 +869,112 @@ Conversation: ${history.map(h => `Patient: ${h.user}`).join(' | ')}`;
             const doc = new jsPDF();
             const pageW = doc.internal.pageSize.getWidth();
             const pageH = doc.internal.pageSize.getHeight();
-            const margin = 20;
+            const margin = 16;
             const contentW = pageW - margin * 2;
+            const maxTextW = contentW - 8; // safe inner width
             let y = 20;
             const addPage = () => { doc.addPage(); y = 20; };
             const checkY = (needed = 10) => { if (y + needed > pageH - 20) addPage(); };
 
+            // Header
             doc.setFillColor(15, 118, 110);
             doc.rect(0, 0, pageW, 14, 'F');
-            doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(255, 255, 255);
+            doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(255, 255, 255);
             doc.text("MY AI MEDICAL ANALYSIS REPORT", margin, 9);
             doc.setTextColor(0, 0, 0); y = 22;
 
-            doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.setTextColor(100, 116, 139);
+            // Patient line
+            doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(100, 116, 139);
             const patientLine = `${currentFullName ? currentFullName + ' · ' : ''}${new Date().toLocaleDateString()}`;
             doc.text(patientLine, margin, y); y += 10;
 
+            // Parse and render sections
             const sections = reportText.split(/\n---\n/);
             sections.forEach(section => {
                 const lines = section.trim().split('\n');
                 const heading = lines[0].trim();
                 const body = lines.slice(1).join('\n').trim();
-                if (!heading) return;
+                if (!heading || !body) return;
+
                 const isPharmacy = /pharmacy|medication|drug|rx/i.test(heading);
-                checkY(14);
+                checkY(16);
+
                 if (isPharmacy) {
-                    const boxLines = doc.splitTextToSize(body, contentW - 10);
-                    const boxH = boxLines.length * 6 + 18;
+                    // Pre-calculate box height
+                    doc.setFontSize(8.5);
+                    const boxLines = doc.splitTextToSize(body, maxTextW - 6);
+                    const lineH = 5.5;
+                    const boxH = boxLines.length * lineH + 20;
                     checkY(boxH);
-                    doc.setDrawColor(15, 118, 110); doc.setLineWidth(0.6);
+
+                    doc.setDrawColor(15, 118, 110); doc.setLineWidth(0.5);
                     doc.rect(margin, y, contentW, boxH);
                     doc.setFillColor(240, 253, 250);
                     doc.rect(margin, y, contentW, 9, 'F');
-                    doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(15, 118, 110);
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(15, 118, 110);
                     doc.text("PHARMACY CARD", margin + 4, y + 6); y += 11;
-                    doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.setTextColor(51, 65, 85);
-                    boxLines.forEach(line => { checkY(6); doc.text(line, margin + 4, y); y += 6; }); y += 6;
+                    doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(51, 65, 85);
+                    boxLines.forEach(line => {
+                        checkY(lineH + 2);
+                        doc.text(line, margin + 4, y);
+                        y += lineH;
+                    });
+                    y += 7;
                 } else {
-                    doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(15, 118, 110);
+                    // Section heading
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(15, 118, 110);
                     doc.text(heading, margin, y); y += 2;
-                    doc.setDrawColor(20, 184, 166); doc.setLineWidth(0.3); doc.line(margin, y, margin + contentW, y); y += 5;
-                    doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(30, 41, 59);
-                    const bodyLines = doc.splitTextToSize(body, contentW);
-                    bodyLines.forEach(line => { checkY(7); doc.text(line, margin, y); y += 7; }); y += 4;
+                    doc.setDrawColor(20, 184, 166); doc.setLineWidth(0.3);
+                    doc.line(margin, y, margin + contentW, y); y += 5;
+
+                    // Body text
+                    doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.setTextColor(30, 41, 59);
+                    const bodyLines = doc.splitTextToSize(body, maxTextW);
+                    bodyLines.forEach(line => {
+                        checkY(6);
+                        doc.text(line, margin, y);
+                        y += 6;
+                    });
+                    y += 5;
                 }
             });
 
+            // Footer on every page
             const totalPages = doc.internal.getNumberOfPages();
-            const toolUrl = window.location.hostname !== 'localhost' ? window.location.href : 'myaihealth.app';
+            const toolUrl = 'https://dagrang-repository.github.io/free-ai-medical-tool/';
+            const qrUrl = 'https://i.postimg.cc/8CGvQSLH/qr-code.png';
+
+            // Pre-load QR image
+            let qrDataUrl = null;
+            try {
+                const qrImg = await new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width; canvas.height = img.height;
+                        canvas.getContext('2d').drawImage(img, 0, 0);
+                        resolve(canvas.toDataURL('image/png'));
+                    };
+                    img.onerror = reject;
+                    img.src = qrUrl;
+                });
+                qrDataUrl = qrImg;
+            } catch(e) { console.warn('QR load failed', e); }
+
             for (let i = 1; i <= totalPages; i++) {
                 doc.setPage(i);
-                doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor(148, 163, 184);
-                doc.text(`Page ${i} of ${totalPages} · AI-generated report · Not medical advice`, margin, pageH - 12);
+                doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(148, 163, 184);
+                doc.text(`Page ${i} of ${totalPages} · AI-generated report · Not medical advice`, margin, pageH - 10);
                 doc.setTextColor(20, 184, 166);
-                doc.text(`Free tool: ${toolUrl}`, margin, pageH - 6);
+                doc.text(`Free tool: ${toolUrl}`, margin, pageH - 5);
+                // QR code centered bottom
+                if (qrDataUrl) {
+                    const qrSize = 18;
+                    const qrX = (pageW - qrSize) / 2;
+                    const qrY = pageH - qrSize - 4;
+                    doc.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
+                }
             }
             doc.save(`AI_Medical_Report_${currentFullName ? currentFullName.replace(/\s+/g,'_') + '_' : ''}${new Date().toISOString().split('T')[0]}.pdf`);
         }
