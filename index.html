@@ -392,23 +392,7 @@
 
     <!-- INPUT PAGE -->
     <section id="input-page" class="hidden max-w-screen-xl mx-auto px-6 pt-8 pb-24">
-        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-            <div>
-                <div class="flex items-center gap-x-3 flex-wrap">
-                    <div class="text-sm font-medium text-teal-700">Session active</div>
-                    <div class="px-3 py-1 bg-teal-50 text-teal-700 text-xs font-semibold rounded-2xl">Private • Auto-saved</div>
-                </div>
-                <div id="depth-meter-container" class="mt-3 max-w-xs">
-                    <div class="flex justify-between text-xs text-slate-600 mb-1">
-                        <div>Depth meter</div>
-                        <div id="depth-value">12%</div>
-                    </div>
-                    <div class="h-2 bg-slate-200 rounded-full overflow-hidden" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="12">
-                        <div id="depth-meter" class="depth-meter w-[12%]" style="width: 12%"></div>
-                    </div>
-                </div>
-            </div>
-            
+        <div class="flex justify-end mb-6">
             <div class="text-left sm:text-right">
                 <div class="text-xs text-slate-600">Current step</div>
                 <div id="current-step" class="font-mono text-2xl font-semibold text-teal-700">01</div>
@@ -864,15 +848,21 @@
         // ============================================
 
         async function getNextQuestionFromAI(userInput) {
-            const history = userData.conversationHistory;
-            
-            const prompt = `You are a professional medical intake AI. 
-The user just answered: "${userInput}"
-Previous conversation:
-${history.map(h => `User: ${h.user}\nAI: ${h.ai}`).join('\n')}
+            // Exclude the current incomplete turn (last entry has ai:"") so Gemini doesn't see blank AI responses
+            const history = userData.conversationHistory.slice(0, -1).filter(h => h.ai);
+            const previousQuestions = history.map(h => h.ai).filter(Boolean);
 
-Based ONLY on the user's latest answer, ask ONE clear, relevant follow-up question. 
-Do not explain. Just output the question.`;
+            const prompt = `You are a professional medical intake AI conducting a health intake interview.
+
+Patient's latest answer: "${userInput}"
+
+Previous Q&A:
+${history.map(h => `Q: ${h.ai}\nA: ${h.user}`).join('\n')}
+
+STRICT RULES:
+- Ask ONE new follow-up question based on the patient's latest answer
+- NEVER repeat or rephrase any of these already-asked questions: ${previousQuestions.length ? previousQuestions.map((q,i) => `${i+1}. ${q}`).join(' | ') : 'none yet'}
+- Output the question ONLY — no explanation, no preamble`;
 
             try {
                 const response = await fetch(GEMINI_ENDPOINT, {
@@ -886,7 +876,7 @@ Do not explain. Just output the question.`;
                 return data.candidates[0].content.parts[0].text.trim();
             } catch (error) {
                 console.error("Gemini error:", error);
-                return "Can you tell me more about how this affects your daily life?";
+                return "How long have you been experiencing this?";
             }
         }
 
