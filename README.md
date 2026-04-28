@@ -1,85 +1,119 @@
-# 🧠 My AI Health Analysis
+# 🩺 My AI Health Tool
 
-**Free • Private • Browser-Only • AI-Powered Medical Insights**
+**Free, private, browser-only AI medical intake tool.**  
+No server. No storage. No accounts. No exposed API keys.
 
-> ⚠️ **Important**: This is an AI tool for informational purposes only. It is **not medical advice**, diagnosis, or treatment. Always consult a qualified healthcare professional.
-
----
-
-## ✨ What This Is
-
-A completely free, private medical analysis tool that runs 100% in your browser.  
-No data is sent to any server. No account needed. Nothing is stored.
-
-- Uses advanced AI (Gemini 2.0 Flash) to ask smart follow-up questions
-- Builds a live report as you type or speak
-- Generates a professional PDF report you can download or email
-- Everything is deleted from your browser when you finish
+🔗 **Live:** https://dagrang-repository.github.io/free-ai-medical-tool  
+⭐ If this helped you, star the repo — it keeps the tool free.
 
 ---
 
-🚀 Try It Now (Live Demo)
+## What it does
 
-👉 [Open the Live Tool](https://dagrang-repository.github.io/free-ai-medical-tool/)
-
-*(Replace the link above with your actual GitHub Pages URL after you enable it)*
-
----
-
-## 🔒 Privacy & Safety
-
-- ✅ 100% private — runs only in your browser
-- ✅ No data leaves your device
-- ✅ Auto-deletes everything when you finish
-- ✅ Open source & free forever
+1. You describe your health concern in plain language (or speak it)
+2. AI asks focused, empathetic follow-up questions — like a warm family doctor
+3. Generates a structured PDF report with:
+   - Patient summary
+   - Key symptoms & timeline
+   - Concrete final solution
+   - Pharmacy card (medication categories, forms, dosage guidance)
+   - Risk assessment scores
+   - Urgency level
+4. All data is permanently purged from your device after download
 
 ---
 
-## ⚠️ Medical Disclaimer
+## Privacy model
 
-This tool is **not a substitute for professional medical care**.  
-It provides general correlations and suggestions only.  
-Always consult a doctor or qualified healthcare provider for any health concerns.
-
----
-
-## 📖 How to Use
-
-1. Open the tool
-2. Type or speak your health concerns naturally
-3. Answer the AI’s follow-up questions
-4. Watch your live report grow in real time
-5. Download or email your professional PDF report
-6. Everything is automatically deleted
+- **Zero server storage** — nothing is sent to any server except the Gemini API for AI processing
+- **No accounts** — no login, no email required
+- **Auto-purge** — after PDF download, localStorage, sessionStorage, IndexedDB, and Service Worker cache are all wiped
+- **Client-side PDF** — report is generated entirely in your browser
+- **Open source** — you can read every line of code
 
 ---
 
-## 💡 Why This Exists
+## Architecture
 
-Many people want to understand their symptoms better but don’t want to:
-- Share private health data with big companies
-- Pay for expensive consultations just to get basic insights
-- Deal with complicated medical websites
+### Single HTML file
+No build step. No framework. No npm install. Drop `index.html` anywhere and it works.
 
-This tool gives you a private, free, AI-powered starting point.
+### Cloudflare Worker as AI proxy
+```
+Browser → Cloudflare Worker → Gemini API
+```
+API keys are stored as encrypted environment variables in the Worker. The frontend never sees a key. GitHub's secret scanner has nothing to flag.
 
----
+### 5-key rotation with model fallback
+If one key hits a rate limit or fails, the Worker automatically tries the next key across multiple models:
+- `gemini-2.0-flash`
+- `gemini-2.0-flash-lite`  
+- `gemini-2.5-flash`
 
-## 🛠️ Built With
+### Offline support
+Requests are queued when the user loses connection and auto-drained when they reconnect.
 
-- Pure HTML + Tailwind CSS + JavaScript
-- Gemini 2.0 Flash (free AI model)
-- jsPDF for report generation
-- SpeechRecognition & SpeechSynthesis (voice input/output)
-
----
-
-## 📜 License & Credits
-
-Free forever for personal and non-commercial use.  
-Built with ❤️ by Sang DAGRANG • 2026
+### Global error boundary
+All unhandled JS errors and promise rejections are caught — user sees a toast, no silent crashes, no data loss.
 
 ---
 
-**Remember**: This is a helpful starting point — not a diagnosis.  
-Please take care of yourself and talk to real healthcare professionals when needed.
+## Tech stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | Vanilla JS, Tailwind Play CDN |
+| PDF generation | jsPDF (client-side) |
+| AI proxy | Cloudflare Workers |
+| AI engine | Google Gemini |
+| Hosting | GitHub Pages |
+| Analytics | Google Analytics (anonymous) |
+
+---
+
+## Self-hosting
+
+### Option 1 — GitHub Pages (easiest)
+1. Fork this repo
+2. Enable GitHub Pages (Settings → Pages → main branch)
+3. Done — your own instance is live
+
+### Option 2 — Any static host
+Upload `index.html` to Netlify, Vercel, Cloudflare Pages, or your own server. No backend needed.
+
+### Option 3 — Your own Cloudflare Worker
+1. Create a Worker at [dash.cloudflare.com](https://dash.cloudflare.com)
+2. Paste the Worker code (see `worker.js` or inline in index.html comments)
+3. Add your Gemini API keys as `GEMINI_KEYS` environment variable (comma-separated)
+4. Update `WORKER_URL` in `index.html` to your Worker URL
+5. Get free Gemini API keys at [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
+
+---
+
+## Contributing
+
+PRs welcome. Key areas where help is appreciated:
+
+- Multilingual support (translations)
+- Improved red-flag detection logic
+- Better PDF layout for edge cases
+- Accessibility improvements
+- Additional pharmacy card detail
+
+---
+
+## Disclaimer
+
+This tool is AI-generated for informational purposes only. It is **not medical advice, diagnosis, or prescription**. Always consult a qualified healthcare professional. Not a medical device under EU MDR, FDA 21 CFR, or any national healthcare regulation.
+
+---
+
+## Support
+
+If this tool helped you, consider supporting it:
+
+❤️ [Donate via Stripe](https://buy.stripe.com/fZu00jdsW2O46jm6955ZC07) — keeps it free for everyone
+
+---
+
+Built by [Sang DAGRANG](https://www.letsmeet-here.app) • [LetsMeet-Here](https://www.letsmeet-here.app) • [SecuresVault](https://www.securesvault.com)
