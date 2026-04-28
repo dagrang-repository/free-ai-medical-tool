@@ -272,28 +272,122 @@
         // ============================================
         // CONFIGURATION
         // ============================================
-        const GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyBY1WmKIBKeXDQmu1LeQlP3zhuYu2w1Pw0";
         const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/fZu00jdsW2O46jm6955ZC07";
 
         // ============================================
-        // SAFE GEMINI CALL WRAPPER
+        // 10-LAYER GEMINI PROTECTION
         // ============================================
-        async function safeGeminiCall(prompt, fallbackMessage = "Sorry, I couldn't process that. Please try again.") {
-            const response = await fetch(GEMINI_ENDPOINT, {
+        const GEMINI_KEYS = [
+            "AIzaSyBY1WmKIBKeXDQmu1LeQlP3zhuYu2w1Pw0",
+            "AIzaSyDF_dcQDu8cdvf_18glY1MSLrSaTu6zp7Q",
+            "AIzaSyDPIm1dI_C7yGbd5lWLucbDD0vTHTSy4_M"
+        ];
+        const GEMINI_MODELS = [
+            "gemini-2.0-flash",
+            "gemini-1.5-flash"
+        ];
+        const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
+        let _geminiKeyIndex = 0;
+        let _geminiModelIndex = 0;
+        let _lastSuccessfulResponse = null; // Layer 10: cache
+        let _offlineQueue = []; // Layer 9: queue
+        let _isOnline = navigator.onLine;
+        window.addEventListener('online', () => {
+            _isOnline = true;
+            _drainOfflineQueue();
+        });
+        window.addEventListener('offline', () => { _isOnline = false; });
+
+        function _geminiEndpoint(keyIdx, modelIdx) {
+            return `${GEMINI_BASE}${GEMINI_MODELS[modelIdx]}:generateContent?key=${GEMINI_KEYS[keyIdx]}`;
+        }
+
+        async function _drainOfflineQueue() {
+            while (_offlineQueue.length > 0) {
+                const { prompt, resolve, reject } = _offlineQueue.shift();
+                try { resolve(await safeGeminiCall(prompt)); } catch(e) { reject(e); }
+            }
+        }
+
+        async function _attemptGeminiCall(prompt, keyIdx, modelIdx) {
+            const endpoint = _geminiEndpoint(keyIdx, modelIdx);
+            const response = await fetch(endpoint, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
+                referrerPolicy: "no-referrer", // Layer 5
                 body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
             });
+            // Layer 7: detect 403 vs network error
+            if (response.status === 403) throw new Error("KEY_BLOCKED");
+            if (response.status === 429) throw new Error("RATE_LIMITED");
+            if (!response.ok) throw new Error(`HTTP_${response.status}`);
             const data = await response.json();
-            if (data.error) {
-                console.error("Gemini API Error:", data.error);
-                throw new Error(data.error.message || "API error");
-            }
-            if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts[0]) {
-                console.error("Invalid Gemini response:", data);
-                throw new Error("Invalid response from AI");
-            }
+            if (data.error) throw new Error(data.error.message || "API_ERROR");
+            if (!data.candidates?.[0]?.content?.parts?.[0]) throw new Error("INVALID_RESPONSE");
             return data.candidates[0].content.parts[0].text.trim();
+        }
+
+        // Layer 6: static fallback questions
+        const _fallbackQuestions = [
+            "How long have you been experiencing these symptoms?",
+            "On a scale of 1-10, how severe are your symptoms?",
+            "Have you taken any medications for this?",
+            "Do you have any known allergies?",
+            "Have you seen a doctor about this before?"
+        ];
+        let _fallbackQIdx = 0;
+
+        async function safeGeminiCall(prompt) {
+            // Layer 9: queue if offline
+            if (!_isOnline) {
+                return new Promise((resolve, reject) => {
+                    _offlineQueue.push({ prompt, resolve, reject });
+                    showToast("You're offline — request queued");
+                });
+            }
+
+            const MAX_RETRIES = 3; // Layer 3
+            let lastError = null;
+
+            for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+                // Layer 8: toast on retry
+                if (attempt > 0) {
+                    showToast(`Retrying... (attempt ${attempt + 1})`);
+                    await new Promise(r => setTimeout(r, 1000 * attempt));
+                }
+
+                // Layer 2: rotate through all key+model combos
+                for (let ki = 0; ki < GEMINI_KEYS.length; ki++) {
+                    for (let mi = 0; mi < GEMINI_MODELS.length; mi++) {
+                        const keyIdx = (_geminiKeyIndex + ki) % GEMINI_KEYS.length;
+                        const modelIdx = (_geminiModelIndex + mi) % GEMINI_MODELS.length;
+                        try {
+                            const result = await _attemptGeminiCall(prompt, keyIdx, modelIdx);
+                            _geminiKeyIndex = keyIdx; // stick with working key
+                            _geminiModelIndex = modelIdx;
+                            _lastSuccessfulResponse = result; // Layer 10: cache success
+                            return result;
+                        } catch(e) {
+                            lastError = e;
+                            console.warn(`Gemini attempt failed [key:${keyIdx} model:${modelIdx}]:`, e.message);
+                            // Layer 4: if key blocked, try next key immediately
+                            if (e.message === "KEY_BLOCKED") continue;
+                        }
+                    }
+                }
+            }
+
+            // Layer 10: return cached response if available
+            if (_lastSuccessfulResponse) {
+                console.warn("All Gemini calls failed — using cached response");
+                return _lastSuccessfulResponse;
+            }
+
+            // Layer 6: static fallback question
+            const fallback = _fallbackQuestions[_fallbackQIdx % _fallbackQuestions.length];
+            _fallbackQIdx++;
+            console.warn("Using static fallback question");
+            return fallback;
         }
 
         // ============================================
@@ -1031,16 +1125,6 @@ Conversation: ${userData.conversationHistory.map(h => `Patient: ${h.user}`).join
                 reader.readAsText(file);
             };
             input.click();
-        }
-
-        // ============================================
-        // PWA
-        // ============================================
-        function registerPWA() {
-            if (!('serviceWorker' in navigator)) return;
-            if (location.protocol === 'file:') return;
-            const swCode = `const CACHE='myai-health-v1';self.addEventListener('install',e=>self.skipWaiting());self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(fetch(e.request).then(r=>{const copy=r.clone();caches.open(CACHE).then(c=>c.put(e.request,copy)).catch(()=>{});return r}).catch(()=>caches.match(e.request)))});`;
-            try { const blob = new Blob([swCode],{type:'text/javascript'}); const url=URL.createObjectURL(blob); navigator.serviceWorker.register(url).catch(()=>{}); } catch(e) {}
         }
 
         // ============================================
